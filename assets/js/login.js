@@ -1,128 +1,160 @@
 
 import {
   auth,
+  db,
   signInWithEmailAndPassword,
-  isAdminEmail
+  signOut,
+  doc,
+  getDoc,
+  isAdminEmail,
+  normalizeLoginIdentifier,
+  getDashboardPath
 } from "./firebase.js";
 
-const form = document.getElementById("loginForm");
-const adminTab = document.getElementById("adminTab");
-const userTab = document.getElementById("userTab");
-const emailField = document.getElementById("emailField");
-const codeField = document.getElementById("codeField");
-const emailInput = document.getElementById("email");
-const codeInput = document.getElementById("schoolCode");
+const loginForm = document.getElementById("loginForm");
+const identifierInput = document.getElementById("identifier");
 const passwordInput = document.getElementById("password");
-const submitButton = document.getElementById("submitButton");
-const message = document.getElementById("message");
+const messageElement = document.getElementById("loginMessage");
+const submitButton = loginForm?.querySelector(
+  'button[type="submit"]'
+);
 
-let loginMode = "admin";
-
-function showMessage(text, type = "error") {
-  message.textContent = text;
-  message.className = `message ${type}`;
-}
-
-function setMode(mode) {
-  loginMode = mode;
-  const isAdmin = mode === "admin";
-
-  emailField.hidden = !isAdmin;
-  codeField.hidden = isAdmin;
-  emailInput.required = isAdmin;
-  codeInput.required = !isAdmin;
-
-  adminTab.classList.toggle("active", isAdmin);
-  userTab.classList.toggle("active", !isAdmin);
-  submitButton.textContent = isAdmin
-    ? "دخول الإدارة"
-    : "دخول الطلاب والموظفين";
-
-  message.className = "message";
-}
-
-adminTab.addEventListener("click", () => setMode("admin"));
-userTab.addEventListener("click", () => setMode("user"));
-
-function normalizeCode(code) {
-  return code.trim().toUpperCase();
-}
-
-function getSafeLoginEmail(code) {
-  // حسابات الطلاب يجب إنشاؤها مسبقًا بهذا التنسيق في Firebase Auth.
-  // الكود ليس بريدًا حقيقيًا ولا يُستخدم لاستقبال الرسائل.
-  const normalized = normalizeCode(code);
-
-  if (!/^[A-Z0-9-]{3,40}$/.test(normalized)) {
-    throw new Error("تأكد من كتابة الكود المدرسي بصورة صحيحة.");
+function showMessage(message, type = "error") {
+  if (!messageElement) {
+    alert(message);
+    return;
   }
 
-  return `${normalized}@students.egns.com`;
+  messageElement.textContent = message;
+  messageElement.style.display = "block";
+  messageElement.style.color =
+    type === "success" ? "#187044" : "#b8202f";
 }
 
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
+function setLoading(loading) {
+  if (!submitButton) return;
 
-  const password = passwordInput.value;
-  let email = "";
+  submitButton.disabled = loading;
+  submitButton.textContent = loading
+    ? "جارٍ تسجيل الدخول..."
+    : "تسجيل الدخول";
+}
 
-  try {
-    if (loginMode === "admin") {
-      email = emailInput.value.trim().toLowerCase();
+function getFriendlyError(error) {
+  const code = error?.code || "";
 
-      if (!isAdminEmail(email)) {
-        showMessage("هذا الحساب غير مسموح له بالدخول من بوابة الإدارة.");
-        return;
-      }
-    } else {
-      email = getSafeLoginEmail(codeInput.value);
-    }
+  const errors = {
+    "auth/invalid-credential":
+      "الكود أو البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+    "auth/user-not-found":
+      "الحساب غير موجود. راجع بيانات الدخول مع الإدارة.",
+    "auth/wrong-password":
+      "كلمة المرور غير صحيحة.",
+    "auth/invalid-email":
+      "صيغة البريد الإلكتروني غير صحيحة.",
+    "auth/too-many-requests":
+      "محاولات كثيرة. انتظر قليلًا ثم حاول مجددًا.",
+    "auth/network-request-failed":
+      "تعذّر الاتصال بالإنترنت. تحقق من اتصالك وحاول مجددًا.",
+    "auth/user-disabled":
+      "هذا الحساب موقوف. راجع إدارة المدرسة."
+  };
 
-    submitButton.disabled = true;
-    submitButton.textContent = "جارٍ التحقق...";
-    message.className = "message";
+  return errors[code] ||
+    "تعذّر تسجيل الدخول. تحقق من البيانات وحاول مجددًا.";
+}
 
-    const credential = await signInWithEmailAndPassword(
-      auth,
-      email,
-      password
+async function getRoleAndDashboard(user) {
+  const email = (user.email || "").trim().toLowerCase();
+
+  // حسابا الإدارة المحددان مسبقًا
+  if (isAdminEmail(email)) {
+    return {
+      role: "owner",
+      dashboard: "admin.html"
+    };
+  }
+
+  // باقي المستخدمين: الدور يُقرأ من ملفهم في Firestore
+  const profileRef = doc(db, "users", user.uid);
+  const profileSnap = await getDoc(profileRef);
+
+  if (!profileSnap.exists()) {
+    throw new Error(
+      "لم يتم إعداد ملف هذا الحساب بعد. تواصل مع إدارة المدرسة."
     );
+  }
 
-    const actualEmail = (credential.user.email || "").toLowerCase();
+  const profile = profileSnap.data();
 
-    if (loginMode === "admin" && !isAdminEmail(actualEmail)) {
-      await auth.signOut();
-      showMessage("الحساب غير مصرح له بالإدارة.");
+  if (profile.active !== true) {
+    throw new Error(
+      "هذا الحساب غير مفعّل حاليًا. تواصل مع إدارة المدرسة."
+    );
+  }
+
+  const dashboard = getDashboardPath(profile.role);
+
+  if (!dashboard) {
+    throw new Error(
+      "لم يتم تحديد لوحة مناسبة لهذا الحساب. تواصل مع الإدارة."
+    );
+  }
+
+  return {
+    role: profile.role,
+    dashboard
+  };
+}
+
+if (loginForm) {
+  loginForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const identifier = identifierInput?.value.trim();
+    const password = passwordInput?.value;
+
+    if (!identifier || !password) {
+      showMessage("اكتب كود الحساب أو البريد وكلمة المرور.");
       return;
     }
 
-    if (loginMode === "admin") {
-      // لوحة الإدارة سننشئها في الخطوة التالية.
-      window.location.href = "admin.html";
-    } else {
-      // لوحة المستخدمين سننشئها بعد تحديد بنية بيانات الطلاب.
-      window.location.href = "dashboard.html";
+    setLoading(true);
+
+    try {
+      const email = normalizeLoginIdentifier(identifier);
+
+      const credential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      const user = credential.user;
+
+      let destination;
+
+      try {
+        const account = await getRoleAndDashboard(user);
+        destination = account.dashboard;
+      } catch (error) {
+        await signOut(auth);
+        throw error;
+      }
+
+      showMessage("تم تسجيل الدخول بنجاح.", "success");
+
+      window.location.replace(destination);
+    } catch (error) {
+      console.error("Login error:", error);
+
+      showMessage(
+        error.message && !error.code
+          ? error.message
+          : getFriendlyError(error)
+      );
+
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Login error:", error.code || error.message);
-
-    const messages = {
-      "auth/invalid-credential": "بيانات الدخول غير صحيحة.",
-      "auth/user-not-found": "الحساب غير موجود أو بيانات الدخول غير صحيحة.",
-      "auth/wrong-password": "بيانات الدخول غير صحيحة.",
-      "auth/too-many-requests": "محاولات كثيرة. حاول مرة أخرى لاحقًا.",
-      "auth/network-request-failed": "تعذر الاتصال. تحقق من الإنترنت."
-    };
-
-    showMessage(
-      messages[error.code] ||
-      error.message ||
-      "تعذر تسجيل الدخول. راجع البيانات وحاول مرة أخرى."
-    );
-  } finally {
-    submitButton.disabled = false;
-    submitButton.textContent = loginMode === "admin"
-      ? "دخول الإدارة"
-      : "دخول الطلاب والموظفين";
-  }
-});
+  });
+}
