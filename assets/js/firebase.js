@@ -1,7 +1,5 @@
 
-import {
-  initializeApp
-} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 
 import {
   getAuth,
@@ -17,7 +15,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyC5ODDwC3w9ZsHcAAGGdipl3oUNvlUG9Tw",
+  apiKey: "AIzaSyC5ODDw3Cw9ZsHcAAGGdipl3oUNvlUG9Tw",
   authDomain: "egns-99c3b.firebaseapp.com",
   projectId: "egns-99c3b",
   storageBucket: "egns-99c3b.firebasestorage.app",
@@ -39,7 +37,6 @@ export {
   getDoc
 };
 
-// حسابات الإدارة العليا المعتمدة.
 export const ADMIN_EMAILS = [
   "dr.tamer@egns.com",
   "dr.ahmedbassam@egns.com"
@@ -52,25 +49,29 @@ export function isAdminEmail(email) {
 }
 
 /*
-  البريد الإلكتروني يدخل كما هو.
-  الكود لا يتحول تلقائيًا إلى حساب طالب؛
-  بل يُبحث عنه في users.loginCode.
+  البريد الإلكتروني للإدارة يُستخدم كما هو.
+  باقي الحسابات تستخدم كودًا فريدًا، مثل STU001 أو TCH001.
+  هذا الكود يُحوّل إلى بريد داخلي لحساب Firebase Auth.
+  التحويل ليس بديلًا عن كلمة المرور أو صلاحيات Firestore.
 */
 export function normalizeLoginIdentifier(identifier) {
   const value = String(identifier || "").trim();
+
+  if (!value) {
+    throw new Error("اكتب البريد الإلكتروني أو كود الحساب.");
+  }
 
   if (value.includes("@")) {
     return value.toLowerCase();
   }
 
-  // هذه علامة مؤقتة حتى نربط الأكواد بحسابات Firebase.
-  // لا تنشئ حسابًا ولا تمنح صلاحيات.
-  throw new Error(
-    "تسجيل الدخول بالكود يحتاج إلى ربط الكود بحساب Firebase. سنجهّز هذا الربط في الخطوة التالية."
-  );
+  if (!/^[a-zA-Z0-9._-]{3,64}$/.test(value)) {
+    throw new Error("كود الحساب غير صالح.");
+  }
+
+  return `${value.toLowerCase()}@accounts.egns.com`;
 }
 
-// الدور هو الذي يحدد اللوحة، وليس اختيار المستخدم.
 const DASHBOARDS = {
   owner: "admin.html",
   director: "admin.html",
@@ -87,14 +88,11 @@ export function getDashboardPath(role) {
   return DASHBOARDS[String(role || "").trim()] || null;
 }
 
-// جلب ملف المستخدم من Firestore.
 export async function getUserProfile(uid) {
   const profileRef = doc(db, "users", uid);
   const profileSnapshot = await getDoc(profileRef);
 
-  if (!profileSnapshot.exists()) {
-    return null;
-  }
-
-  return profileSnapshot.data();
+  return profileSnapshot.exists()
+    ? profileSnapshot.data()
+    : null;
 }
