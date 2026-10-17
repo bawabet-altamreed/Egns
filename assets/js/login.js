@@ -11,151 +11,107 @@ import {
   getDashboardPath
 } from "./firebase.js";
 
-const loginForm = document.getElementById("loginForm");
+const form = document.getElementById("loginForm");
 const identifierInput = document.getElementById("identifier");
 const passwordInput = document.getElementById("password");
-const messageElement = document.getElementById("loginMessage");
-const submitButton = loginForm?.querySelector('button[type="submit"]');
+const message = document.getElementById("loginMessage");
 
-function showMessage(message, type = "error") {
-  if (!messageElement) {
-    alert(message);
+function showMessage(text, type = "error") {
+  if (!message) return;
+  message.textContent = text;
+  message.dataset.type = type;
+  message.hidden = false;
+}
+
+function normalizeCode(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+form?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const identifier = identifierInput?.value.trim() || "";
+  const password = passwordInput?.value || "";
+
+  if (!identifier || !password) {
+    showMessage("اكتب بيانات الدخول كاملة.");
     return;
   }
 
-  messageElement.textContent = message;
-  messageElement.style.display = "block";
-  messageElement.className =
-    type === "success" ? "form-success" : "form-error";
-}
+  const submitButton = form.querySelector('[type="submit"]');
 
-function setLoading(loading) {
-  if (!submitButton) return;
+  try {
+    if (submitButton) submitButton.disabled = true;
+    if (message) message.hidden = true;
 
-  submitButton.disabled = loading;
-  submitButton.textContent = loading
-    ? "جارٍ التحقق من الحساب..."
-    : "تسجيل الدخول ←";
-}
+    const email = normalizeLoginIdentifier(identifier);
 
-function friendlyError(error) {
-  const errors = {
-    "auth/invalid-credential":
-      "بيانات الدخول غير صحيحة.",
-    "auth/user-not-found":
-      "بيانات الدخول غير صحيحة.",
-    "auth/wrong-password":
-      "بيانات الدخول غير صحيحة.",
-    "auth/invalid-email":
-      "تعذّر التحقق من بيانات الحساب.",
-    "auth/too-many-requests":
-      "محاولات كثيرة. انتظر قليلًا ثم حاول مجددًا.",
-    "auth/network-request-failed":
-      "تعذّر الاتصال. تحقق من الإنترنت وحاول مجددًا.",
-    "auth/user-disabled":
-      "هذا الحساب موقوف. تواصل مع إدارة المدرسة."
-  };
-
-  return errors[error?.code] ||
-    "حدث خطأ أثناء تسجيل الدخول. حاول مرة أخرى.";
-}
-
-async function resolveAccount(user) {
-  const email = (user.email || "").trim().toLowerCase();
-
-  // حسابا الإدارة العليا المحددان مسبقًا.
-  if (isAdminEmail(email)) {
-    return {
-      role: "owner",
-      dashboard: "admin.html"
-    };
-  }
-
-  // كل حساب آخر يجب أن يكون له ملف مستخدم في Firestore.
-  const profileRef = doc(db, "users", user.uid);
-  const profileSnapshot = await getDoc(profileRef);
-
-  if (!profileSnapshot.exists()) {
-    throw new Error(
-      "الحساب غير مكتمل الإعداد. تواصل مع إدارة المدرسة."
+    const credential = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
     );
-  }
 
-  const profile = profileSnapshot.data();
+    const user = credential.user;
+    let role;
+    let dashboard;
 
-  if (profile.active !== true) {
-    throw new Error(
-      "الحساب غير مفعّل. تواصل مع إدارة المدرسة."
-    );
-  }
+    if (isAdminEmail(user.email)) {
+      // حسابات الإدارة المحددة مسبقًا فقط.
+      role = user.email.toLowerCase() === "dr.tamer@egns.com"
+        ? "owner"
+        : "director";
 
-  const dashboard = getDashboardPath(profile.role);
+      dashboard = getDashboardPath(role);
+    } else {
+      const snapshot = await getDoc(doc(db, "users", user.uid));
 
-  if (!dashboard) {
-    throw new Error(
-      "لم يتم تحديد لوحة لهذا الحساب. تواصل مع الإدارة."
-    );
-  }
-
-  return {
-    role: profile.role,
-    dashboard
-  };
-}
-
-if (loginForm) {
-  loginForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    const identifier = identifierInput?.value.trim();
-    const password = passwordInput?.value;
-
-    if (!identifier || !password) {
-      showMessage("أدخل بيانات الحساب وكلمة المرور.");
-      return;
-    }
-
-    setLoading(true);
-    showMessage("");
-
-    let authenticatedUser = null;
-
-    try {
-      // البريد يُستخدم كما هو، والكود يُحوّل وفق قاعدة موحدة.
-      const email = normalizeLoginIdentifier(identifier);
-
-      const credential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-
-      authenticatedUser = credential.user;
-
-      const account = await resolveAccount(authenticatedUser);
-
-      showMessage("تم تسجيل الدخول بنجاح.", "success");
-
-      window.location.replace(account.dashboard);
-    } catch (error) {
-      console.error("EGNS login error:", error);
-
-      // لا نترك جلسة مفتوحة لو تعذّر تحديد صلاحية الحساب.
-      if (authenticatedUser) {
-        try {
-          await signOut(auth);
-        } catch (signOutError) {
-          console.error("Sign out error:", signOutError);
-        }
+      if (!snapshot.exists()) {
+        throw new Error("لا يوجد ملف صلاحيات لهذا الحساب. تواصل مع إدارة المدرسة.");
       }
 
-      showMessage(
-        error.message && !error.code
-          ? error.message
-          : friendlyError(error)
-      );
+      const profile = snapshot.data();
 
-      setLoading(false);
+      if (profile.active !== true) {
+        throw new Error("هذا الحساب غير نشط. تواصل مع إدارة المدرسة.");
+      }
+
+      // لا نسمح بالدخول بكود لا يطابق ملف المستخدم.
+      if (
+        !identifier.includes("@") &&
+        normalizeCode(profile.loginCode) !== normalizeCode(identifier)
+      ) {
+        throw new Error("كود الحساب غير مطابق للملف المسجل.");
+      }
+
+      role = String(profile.role || "").trim();
+      dashboard = getDashboardPath(role);
+
+      if (!dashboard) {
+        throw new Error("صلاحية الحساب غير صحيحة. راجع إدارة المدرسة.");
+      }
     }
-  });
-}
+
+    window.location.replace(dashboard);
+  } catch (error) {
+    if (auth.currentUser) {
+      await signOut(auth).catch(() => {});
+    }
+
+    const knownErrors = {
+      "auth/invalid-credential": "بيانات الدخول غير صحيحة.",
+      "auth/user-not-found": "بيانات الدخول غير صحيحة.",
+      "auth/wrong-password": "بيانات الدخول غير صحيحة.",
+      "auth/too-many-requests": "محاولات كثيرة. انتظر قليلًا ثم حاول مرة أخرى.",
+      "auth/network-request-failed": "تعذر الاتصال. تحقق من الإنترنت."
+    };
+
+    showMessage(
+      knownErrors[error.code] ||
+      error.message ||
+      "تعذر تسجيل الدخول. حاول مرة أخرى."
+    );
+  } finally {
+    if (submitButton) submitButton.disabled = false;
+  }
+});
