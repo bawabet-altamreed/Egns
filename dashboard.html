@@ -1,0 +1,187 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#142c52">
+  <title>بوابة الطالب | EGNS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/student.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="dashboard.html">
+        <div class="brand-mark">E<span>G</span></div>
+        <div>
+          <strong>EGNS</strong>
+          <small>Smart Campus</small>
+        </div>
+      </a>
+
+      <div class="student-mini">
+        <div class="avatar" id="sideAvatar">ط</div>
+        <div class="student-mini-info">
+          <strong id="sideName">الطالب</strong>
+          <small id="sideClass">جاري تحميل الصف...</small>
+        </div>
+      </div>
+
+      <nav class="nav-menu" aria-label="القائمة الرئيسية">
+        <button class="nav-link active" data-section="overview"><span>⌂</span> الرئيسية</button>
+        <button class="nav-link" data-section="announcements"><span>▤</span> الإعلانات <i id="announcementCount">0</i></button>
+        <button class="nav-link" data-section="timetable"><span>▦</span> الجدول الدراسي</button>
+        <button class="nav-link" data-section="subjects"><span>▧</span> المواد والمحاضرات</button>
+        <button class="nav-link" data-section="exams"><span>✓</span> الامتحانات</button>
+        <button class="nav-link" data-section="achievements"><span>★</span> النقاط والإنجازات</button>
+        <button class="nav-link" data-section="profile"><span>♙</span> ملفي الشخصي</button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="german-note">
+          <span class="flag"><b></b><b></b><b></b></span>
+          <div><strong>Learn. Grow. Succeed.</strong><small>Egyptian German Nursing School</small></div>
+        </div>
+        <button class="logout-btn" id="logoutBtn">↪ تسجيل الخروج</button>
+      </div>
+    </aside>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <main class="main-area">
+      <header class="topbar">
+        <button class="menu-toggle" id="menuToggle" aria-label="فتح القائمة">☰</button>
+        <div class="breadcrumb"><span>EGNS</span><b>/</b><strong id="pageTitle">الرئيسية</strong></div>
+        <div class="topbar-actions">
+          <span class="online-dot"></span>
+          <span class="online-label">الحساب متصل</span>
+          <button class="icon-btn" data-go="announcements" aria-label="الإعلانات">♧</button>
+        </div>
+      </header>
+
+      <div class="page-content">
+        <div id="pageMessage" class="notice" hidden></div>
+
+        <section class="content-section active" id="section-overview">
+          <div class="welcome-banner">
+            <div class="welcome-copy">
+              <span class="eyebrow">EGNS STUDENT PORTAL</span>
+              <h1>أهلًا بك، <span id="welcomeName">طالبنا العزيز</span> 👋</h1>
+              <p>من هنا تقدر تتابع دراستك، جدولك، محاضراتك وامتحاناتك في مكان واحد.</p>
+              <div class="welcome-meta"><span>▣</span> <span id="welcomeClass">جاري تحميل بيانات الصف...</span></div>
+            </div>
+            <div class="welcome-decoration" aria-hidden="true">
+              <div class="dec-circle"></div>
+              <div class="dec-book">EGNS<br><small>EXCELLENCE</small></div>
+              <span class="dec-star">✦</span>
+            </div>
+          </div>
+
+          <div class="section-heading">
+            <div><h2>ملخص دراستك</h2><p>نظرة سريعة على أهم بياناتك</p></div>
+          </div>
+
+          <div class="stats-grid">
+            <article class="stat-card"><div class="stat-icon blue">▧</div><div><span>المواد الدراسية</span><strong id="statSubjects">—</strong><small>المواد المتاحة لك</small></div></article>
+            <article class="stat-card"><div class="stat-icon gold">✓</div><div><span>الامتحانات</span><strong id="statExams">—</strong><small>الامتحانات المنشورة</small></div></article>
+            <article class="stat-card"><div class="stat-icon red">▤</div><div><span>الإعلانات</span><strong id="statAnnouncements">—</strong><small>الإعلانات المتاحة</small></div></article>
+            <article class="stat-card"><div class="stat-icon green">★</div><div><span>نقاطك</span><strong id="statPoints">—</strong><small>نقاط الإنجاز المسجلة</small></div></article>
+          </div>
+
+          <div class="dashboard-grid">
+            <article class="panel">
+              <div class="panel-heading"><div><h3>آخر الإعلانات</h3><p>تابع أخبار المدرسة</p></div><button class="text-button" data-go="announcements">عرض الكل ←</button></div>
+              <div id="overviewAnnouncements" class="compact-list"><div class="loading-state">جاري تحميل الإعلانات...</div></div>
+            </article>
+            <article class="panel">
+              <div class="panel-heading"><div><h3>الامتحانات المتاحة</h3><p>راجع الامتحانات المنشورة</p></div><button class="text-button" data-go="exams">عرض الكل ←</button></div>
+              <div id="overviewExams" class="compact-list"><div class="loading-state">جاري تحميل الامتحانات...</div></div>
+            </article>
+          </div>
+
+          <article class="panel quick-panel">
+            <div class="panel-heading"><div><h3>الوصول السريع</h3><p>انتقل مباشرة للخدمة التي تحتاجها</p></div></div>
+            <div class="quick-actions">
+              <button data-go="timetable"><span>▦</span><strong>جدولي الدراسي</strong><small>مواعيد الحصص</small></button>
+              <button data-go="subjects"><span>▧</span><strong>المواد والمحاضرات</strong><small>محتوى دراستك</small></button>
+              <button data-go="exams"><span>✓</span><strong>الامتحانات</strong><small>اختبر معلوماتك</small></button>
+              <button data-go="achievements"><span>★</span><strong>إنجازاتي</strong><small>النقاط والترتيب</small></button>
+            </div>
+          </article>
+        </section>
+
+        <section class="content-section" id="section-announcements">
+          <div class="section-heading"><div><h2>الإعلانات المدرسية</h2><p>كل الأخبار والتنبيهات المخصصة لك</p></div></div>
+          <div id="announcementsList" class="cards-list"><div class="loading-state">جاري تحميل الإعلانات...</div></div>
+        </section>
+
+        <section class="content-section" id="section-timetable">
+          <div class="section-heading"><div><h2>الجدول الدراسي</h2><p>الجدول المنشور لصفك الدراسي</p></div></div>
+          <div class="panel table-panel">
+            <div class="table-scroll">
+              <table><thead><tr><th>اليوم</th><th>الحصة</th><th>المادة</th><th>المدرس</th><th>المكان</th></tr></thead>
+                <tbody id="timetableBody"><tr><td colspan="5">جاري تحميل الجدول...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+          <p class="muted-note">يعرض الجدول المنشور من إدارة المدرسة. لا يتضمن هذا القسم تسجيل الحضور أو الغياب.</p>
+        </section>
+
+        <section class="content-section" id="section-subjects">
+          <div class="section-heading"><div><h2>المواد والمحاضرات</h2><p>المواد والمحتوى المتاح لصفك الدراسي</p></div></div>
+          <div class="filter-row"><input id="subjectSearch" type="search" placeholder="ابحث عن مادة أو محاضرة..." aria-label="بحث في المواد"></div>
+          <div id="subjectsList" class="subject-grid"><div class="loading-state">جاري تحميل المواد...</div></div>
+        </section>
+
+        <section class="content-section" id="section-exams">
+          <div class="section-heading"><div><h2>الامتحانات الإلكترونية</h2><p>امتحانات منشورة للصف الدراسي الخاص بك</p></div></div>
+          <div id="examsList" class="exam-grid"><div class="loading-state">جاري تحميل الامتحانات...</div></div>
+        </section>
+
+        <section class="content-section" id="section-achievements">
+          <div class="section-heading"><div><h2>النقاط والإنجازات</h2><p>تابع تقدمك الدراسي ونقاطك المسجلة</p></div></div>
+          <div class="achievement-summary">
+            <div class="achievement-star">★</div><div><span>إجمالي نقاطك</span><strong id="achievementPoints">—</strong><small>النقاط المسجلة في ملفك</small></div>
+          </div>
+          <div class="panel"><div class="panel-heading"><div><h3>الإنجازات</h3><p>الإنجازات التي اعتمدتها المدرسة</p></div></div><div id="badgesList" class="badge-grid"><div class="loading-state">جاري تحميل الإنجازات...</div></div></div>
+          <div class="panel"><div class="panel-heading"><div><h3>لوحة المتصدرين</h3><p>الترتيب المنشور للطلاب في صفك</p></div></div><div id="leaderboardList" class="leaderboard-list"><div class="loading-state">جاري تحميل الترتيب...</div></div></div>
+        </section>
+
+        <section class="content-section" id="section-profile">
+          <div class="section-heading"><div><h2>ملفي الشخصي</h2><p>بيانات حسابك المسجلة لدى المدرسة</p></div></div>
+          <div class="profile-layout">
+            <div class="panel profile-card">
+              <div class="profile-avatar" id="profileAvatar">ط</div>
+              <h3 id="profileName">الطالب</h3><p id="profileCode">كود الطالب</p>
+              <span class="status-pill">حساب طالب</span>
+            </div>
+            <div class="panel profile-details">
+              <h3>البيانات الدراسية</h3>
+              <div class="detail-row"><span>الاسم</span><strong id="profileNameDetail">—</strong></div>
+              <div class="detail-row"><span>كود الحساب</span><strong id="profileCodeDetail">—</strong></div>
+              <div class="detail-row"><span>المرحلة</span><strong id="profileStage">—</strong></div>
+              <div class="detail-row"><span>الفصل</span><strong id="profileClass">—</strong></div>
+              <div class="detail-row"><span>الحالة</span><strong>نشط</strong></div>
+              <p class="muted-note">لتعديل الاسم أو الصف أو بيانات الحساب الرسمية، تواصل مع إدارة المدرسة. لا يتم عرض كلمة المرور أو السماح بتغيير الصلاحيات من هذه الصفحة.</p>
+            </div>
+          </div>
+        </section>
+
+        <footer class="site-footer">
+          <span>© EGNS Smart Campus</span>
+          <span>التعلم • الانضباط • التميز</span>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <dialog id="examDialog" class="exam-dialog">
+    <form method="dialog" class="dialog-top"><strong id="examDialogTitle">الامتحان</strong><button class="icon-btn" aria-label="إغلاق">✕</button></form>
+    <div id="examDialogContent" class="dialog-content"></div>
+  </dialog>
+
+  <script type="module" src="assets/js/student.js"></script>
+</body>
+</html>
