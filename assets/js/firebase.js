@@ -1,5 +1,7 @@
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 
 import {
   getAuth,
@@ -37,6 +39,7 @@ export {
   getDoc
 };
 
+// حسابات الإدارة العليا المعتمدة.
 export const ADMIN_EMAILS = [
   "dr.tamer@egns.com",
   "dr.ahmedbassam@egns.com"
@@ -44,46 +47,54 @@ export const ADMIN_EMAILS = [
 
 export function isAdminEmail(email) {
   return ADMIN_EMAILS.includes(
-    (email || "").trim().toLowerCase()
+    String(email || "").trim().toLowerCase()
   );
 }
 
-// توحيد طريقة تحويل كود المستخدم إلى بريد تسجيل الدخول
+/*
+  البريد الإلكتروني يدخل كما هو.
+  الكود لا يتحول تلقائيًا إلى حساب طالب؛
+  بل يُبحث عنه في users.loginCode.
+*/
 export function normalizeLoginIdentifier(identifier) {
-  const value = (identifier || "").trim().toLowerCase();
+  const value = String(identifier || "").trim();
 
   if (value.includes("@")) {
-    return value;
+    return value.toLowerCase();
   }
 
-  return `${value}@students.egns.com`;
+  // هذه علامة مؤقتة حتى نربط الأكواد بحسابات Firebase.
+  // لا تنشئ حسابًا ولا تمنح صلاحيات.
+  throw new Error(
+    "تسجيل الدخول بالكود يحتاج إلى ربط الكود بحساب Firebase. سنجهّز هذا الربط في الخطوة التالية."
+  );
 }
 
-// جلب دور المستخدم من قاعدة البيانات
+// الدور هو الذي يحدد اللوحة، وليس اختيار المستخدم.
+const DASHBOARDS = {
+  owner: "admin.html",
+  director: "admin.html",
+  student_affairs: "staff.html",
+  exams_affairs: "staff.html",
+  teacher: "teacher.html",
+  student: "dashboard.html",
+  employee: "staff.html",
+  worker: "staff.html",
+  parent: "parent.html"
+};
+
+export function getDashboardPath(role) {
+  return DASHBOARDS[String(role || "").trim()] || null;
+}
+
+// جلب ملف المستخدم من Firestore.
 export async function getUserProfile(uid) {
   const profileRef = doc(db, "users", uid);
-  const profileSnap = await getDoc(profileRef);
+  const profileSnapshot = await getDoc(profileRef);
 
-  if (!profileSnap.exists()) {
+  if (!profileSnapshot.exists()) {
     return null;
   }
 
-  return profileSnap.data();
-}
-
-// تحديد لوحة المستخدم من دوره
-export function getDashboardPath(role) {
-  const dashboards = {
-    owner: "admin.html",
-    admin: "admin.html",
-    school_director: "director-dashboard.html",
-    student_affairs: "student-affairs-dashboard.html",
-    exams_affairs: "exams-dashboard.html",
-    teacher: "teacher-dashboard.html",
-    student: "student-dashboard.html",
-    parent: "parent-dashboard.html",
-    staff: "staff-dashboard.html"
-  };
-
-  return dashboards[role] || null;
+  return profileSnapshot.data();
 }
