@@ -45,18 +45,34 @@ const configs = {
     description: "إنشاء الفصول التي ستُربط بها بيانات الطلاب والمحتوى.",
     idField: "classId",
     fields: [
-      { name: "classId", label: "كود الفصل (classId)", required: true, help: "مثال: NURSE-2A. استخدم قيمة ثابتة وفريدة لكل فصل." },
+      {
+        name: "classId",
+        label: "كود الفصل (classId)",
+        required: true,
+        help: "مثال: NURSE-2A. استخدم قيمة ثابتة وفريدة لكل فصل."
+      },
       { name: "name", label: "اسم الفصل", required: true },
-      { name: "stage", label: "المرحلة الدراسية", type: "select", required: true, options: [
-        ["الأول الثانوي التمريض", "الأول الثانوي التمريض"],
-        ["الثاني الثانوي التمريض", "الثاني الثانوي التمريض"],
-        ["الثالث الثانوي التمريض", "الثالث الثانوي التمريض"],
-        ["الأول معهد", "الأول معهد"],
-        ["الثاني معهد", "الثاني معهد"]
-      ] },
+      {
+        name: "stage",
+        label: "المرحلة الدراسية",
+        type: "select",
+        required: true,
+        options: [
+          ["الأول الثانوي التمريض", "الأول الثانوي التمريض"],
+          ["الثاني الثانوي التمريض", "الثاني الثانوي التمريض"],
+          ["الثالث الثانوي التمريض", "الثالث الثانوي التمريض"],
+          ["الأول معهد", "الأول معهد"],
+          ["الثاني معهد", "الثاني معهد"]
+        ]
+      },
       { name: "section", label: "الشعبة" },
       { name: "academicYear", label: "العام الدراسي" },
-      { name: "active", label: "الفصل نشط", type: "checkbox", defaultValue: true }
+      {
+        name: "active",
+        label: "الفصل نشط",
+        type: "checkbox",
+        defaultValue: true
+      }
     ]
   },
 
@@ -66,20 +82,47 @@ const configs = {
     description: "ربط حساب Authentication موجود بملف طالب في users/{UID}.",
     idField: "uid",
     fields: [
-      { name: "uid", label: "UID من Firebase Authentication", required: true, help: "أنشئ حساب الدخول في Authentication أولًا، ثم انسخ UID هنا. لا تدخل كلمة المرور." },
+      {
+        name: "uid",
+        label: "UID من Firebase Authentication",
+        required: true,
+        help: "أنشئ حساب الدخول في Authentication أولًا، ثم انسخ UID هنا. لا تدخل كلمة المرور."
+      },
       { name: "name", label: "اسم الطالب", required: true },
       { name: "loginCode", label: "كود الدخول", required: true },
-      { name: "stage", label: "المرحلة الدراسية", type: "select", required: true, options: [
-        ["الأول الثانوي التمريض", "الأول الثانوي التمريض"],
-        ["الثاني الثانوي التمريض", "الثاني الثانوي التمريض"],
-        ["الثالث الثانوي التمريض", "الثالث الثانوي التمريض"],
-        ["الأول معهد", "الأول معهد"],
-        ["الثاني معهد", "الثاني معهد"]
-      ] },
-      { name: "classId", label: "كود الفصل (classId)", required: true, help: "اكتب classId نفسه الموجود في قسم الفصول." },
+      {
+        name: "stage",
+        label: "المرحلة الدراسية",
+        type: "select",
+        required: true,
+        options: [
+          ["الأول الثانوي التمريض", "الأول الثانوي التمريض"],
+          ["الثاني الثانوي التمريض", "الثاني الثانوي التمريض"],
+          ["الثالث الثانوي التمريض", "الثالث الثانوي التمريض"],
+          ["الأول معهد", "الأول معهد"],
+          ["الثاني معهد", "الثاني معهد"]
+        ]
+      },
+      {
+        name: "classId",
+        label: "كود الفصل (classId)",
+        required: true,
+        help: "اكتب classId نفسه الموجود في قسم الفصول."
+      },
       { name: "className", label: "اسم الفصل", required: true },
-      { name: "points", label: "النقاط", type: "number", defaultValue: 0, min: 0 },
-      { name: "active", label: "الحساب نشط", type: "checkbox", defaultValue: true }
+      {
+        name: "points",
+        label: "النقاط",
+        type: "number",
+        defaultValue: 0,
+        min: 0
+      },
+      {
+        name: "active",
+        label: "الحساب نشط",
+        type: "checkbox",
+        defaultValue: true
+      }
     ]
   },
 
@@ -89,10 +132,23 @@ const configs = {
     description: "نشر إعلانات عامة أو مخصصة لفصل معيّن.",
     fields: [
       { name: "title", label: "عنوان الإعلان", required: true },
-      { name: "body", label: "نص الإعلان", type: "textarea", required: true },
+      {
+        name: "body",
+        label: "نص الإعلان",
+        type: "textarea",
+        required: true
+      },
       { name: "category", label: "التصنيف" },
-      { name: "classId", label: "كود الفصل (اتركه فارغًا للإعلان العام)" },
-      { name: "published", label: "منشور للطلاب", type: "checkbox", defaultValue: true }
+      {
+        name: "classId",
+        label: "كود الفصل (اتركه فارغًا للإعلان العام)"
+      },
+      {
+        name: "published",
+        label: "منشور للطلاب",
+        type: "checkbox",
+        defaultValue: true
+      }
     ]
   },
 
@@ -102,9 +158,22 @@ const configs = {
     description: "إضافة مواد وربطها بالفصل الدراسي.",
     fields: [
       { name: "name", label: "اسم المادة", required: true },
-      { name: "description", label: "وصف المادة", type: "textarea" },
-      { name: "classId", label: "كود الفصل (classId)", required: true },
-      { name: "published", label: "متاحة للطلاب", type: "checkbox", defaultValue: true }
+      {
+        name: "description",
+        label: "وصف المادة",
+        type: "textarea"
+      },
+      {
+        name: "classId",
+        label: "كود الفصل (classId)",
+        required: true
+      },
+      {
+        name: "published",
+        label: "متاحة للطلاب",
+        type: "checkbox",
+        defaultValue: true
+      }
     ]
   },
 
@@ -114,12 +183,38 @@ const configs = {
     description: "إضافة محاضرات وروابطها وربطها بالمواد والفصول.",
     fields: [
       { name: "title", label: "عنوان المحاضرة", required: true },
-      { name: "description", label: "وصف المحاضرة", type: "textarea" },
-      { name: "url", label: "رابط المحاضرة", type: "url", required: true },
-      { name: "subjectId", label: "معرّف المادة (document ID)", required: true },
-      { name: "subjectName", label: "اسم المادة", required: true },
-      { name: "classId", label: "كود الفصل (classId)", required: true },
-      { name: "published", label: "متاحة للطلاب", type: "checkbox", defaultValue: true }
+      {
+        name: "description",
+        label: "وصف المحاضرة",
+        type: "textarea"
+      },
+      {
+        name: "url",
+        label: "رابط المحاضرة",
+        type: "url",
+        required: true
+      },
+      {
+        name: "subjectId",
+        label: "معرّف المادة (document ID)",
+        required: true
+      },
+      {
+        name: "subjectName",
+        label: "اسم المادة",
+        required: true
+      },
+      {
+        name: "classId",
+        label: "كود الفصل (classId)",
+        required: true
+      },
+      {
+        name: "published",
+        label: "متاحة للطلاب",
+        type: "checkbox",
+        defaultValue: true
+      }
     ]
   },
 
@@ -128,16 +223,36 @@ const configs = {
     collection: "timetables",
     description: "إضافة حصص الجدول الدراسي لكل فصل.",
     fields: [
-      { name: "day", label: "اليوم", type: "select", required: true, options: [
-        ["الأحد", "الأحد"], ["الاثنين", "الاثنين"], ["الثلاثاء", "الثلاثاء"],
-        ["الأربعاء", "الأربعاء"], ["الخميس", "الخميس"], ["الجمعة", "الجمعة"], ["السبت", "السبت"]
-      ] },
+      {
+        name: "day",
+        label: "اليوم",
+        type: "select",
+        required: true,
+        options: [
+          ["الأحد", "الأحد"],
+          ["الاثنين", "الاثنين"],
+          ["الثلاثاء", "الثلاثاء"],
+          ["الأربعاء", "الأربعاء"],
+          ["الخميس", "الخميس"],
+          ["الجمعة", "الجمعة"],
+          ["السبت", "السبت"]
+        ]
+      },
       { name: "period", label: "الحصة / التوقيت", required: true },
       { name: "subjectName", label: "اسم المادة", required: true },
       { name: "teacherName", label: "اسم المدرس" },
       { name: "room", label: "القاعة" },
-      { name: "classId", label: "كود الفصل (classId)", required: true },
-      { name: "published", label: "ظاهر للطلاب", type: "checkbox", defaultValue: true }
+      {
+        name: "classId",
+        label: "كود الفصل (classId)",
+        required: true
+      },
+      {
+        name: "published",
+        label: "ظاهر للطلاب",
+        type: "checkbox",
+        defaultValue: true
+      }
     ]
   },
 
@@ -147,14 +262,49 @@ const configs = {
     description: "أسئلة اختيار من متعدد أو صح وخطأ. تُحفظ مفاتيح الإجابة في examKeys منفصلة.",
     fields: [
       { name: "title", label: "اسم الامتحان", required: true },
-      { name: "description", label: "وصف الامتحان", type: "textarea" },
-      { name: "subjectName", label: "اسم المادة", required: true },
-      { name: "classId", label: "كود الفصل (classId)", required: true },
-      { name: "durationMinutes", label: "المدة بالدقائق", type: "number", required: true, min: 1 },
-      { name: "totalMarks", label: "الدرجة النهائية", type: "number", required: true, min: 1 },
-      { name: "questionsJson", label: "الأسئلة بصيغة JSON", type: "textarea", required: true, full: true,
-        help: 'مثال: [{"type":"mcq","text":"السؤال؟","options":["أ","ب","ج","د"],"correctAnswer":0}] أو {"type":"true_false","text":"العبارة","correctAnswer":true}. في mcq تكون الإجابة الصحيحة رقم الخيار بدءًا من 0.' },
-      { name: "published", label: "متاح للطلاب", type: "checkbox", defaultValue: false }
+      {
+        name: "description",
+        label: "وصف الامتحان",
+        type: "textarea"
+      },
+      {
+        name: "subjectName",
+        label: "اسم المادة",
+        required: true
+      },
+      {
+        name: "classId",
+        label: "كود الفصل (classId)",
+        required: true
+      },
+      {
+        name: "durationMinutes",
+        label: "المدة بالدقائق",
+        type: "number",
+        required: true,
+        min: 1
+      },
+      {
+        name: "totalMarks",
+        label: "الدرجة النهائية",
+        type: "number",
+        required: true,
+        min: 1
+      },
+      {
+        name: "questionsJson",
+        label: "الأسئلة بصيغة JSON",
+        type: "textarea",
+        required: true,
+        full: true,
+        help: 'مثال: [{"type":"mcq","text":"السؤال؟","options":["أ","ب","ج","د"],"correctAnswer":0}] أو {"type":"true_false","text":"العبارة","correctAnswer":true}. في mcq تكون الإجابة الصحيحة رقم الخيار بدءًا من 0.'
+      },
+      {
+        name: "published",
+        label: "متاح للطلاب",
+        type: "checkbox",
+        defaultValue: false
+      }
     ]
   },
 
@@ -164,8 +314,17 @@ const configs = {
     description: "إنشاء الشارات التي يمكن عرضها للطلاب.",
     fields: [
       { name: "name", label: "اسم الشارة", required: true },
-      { name: "description", label: "وصف الشارة", type: "textarea" },
-      { name: "published", label: "متاحة للعرض", type: "checkbox", defaultValue: true }
+      {
+        name: "description",
+        label: "وصف الشارة",
+        type: "textarea"
+      },
+      {
+        name: "published",
+        label: "متاحة للعرض",
+        type: "checkbox",
+        defaultValue: true
+      }
     ]
   },
 
@@ -175,10 +334,29 @@ const configs = {
     description: "إدارة السجلات المعروضة في لوحة المتصدرين.",
     fields: [
       { name: "studentUid", label: "UID الطالب", required: true },
-      { name: "studentName", label: "اسم الطالب", required: true },
-      { name: "points", label: "النقاط", type: "number", required: true, min: 0 },
-      { name: "classId", label: "كود الفصل (classId)", required: true },
-      { name: "published", label: "ظاهر للطلاب", type: "checkbox", defaultValue: true }
+      {
+        name: "studentName",
+        label: "اسم الطالب",
+        required: true
+      },
+      {
+        name: "points",
+        label: "النقاط",
+        type: "number",
+        required: true,
+        min: 0
+      },
+      {
+        name: "classId",
+        label: "كود الفصل (classId)",
+        required: true
+      },
+      {
+        name: "published",
+        label: "ظاهر للطلاب",
+        type: "checkbox",
+        defaultValue: true
+      }
     ]
   }
 };
@@ -251,14 +429,20 @@ function getRecordTitle(record) {
 
 function getRecordSubtitle(record) {
   const parts = [];
+
   if (record.classId) parts.push(`الفصل: ${record.classId}`);
   if (record.stage) parts.push(`المرحلة: ${record.stage}`);
   if (record.loginCode) parts.push(`كود الدخول: ${record.loginCode}`);
   if (record.points !== undefined) parts.push(`النقاط: ${record.points}`);
   if (record.day) parts.push(`اليوم: ${record.day}`);
   if (record.subjectName) parts.push(`المادة: ${record.subjectName}`);
-  if (record.published !== undefined) parts.push(record.published ? "منشور" : "غير منشور");
-  if (record.active !== undefined) parts.push(record.active ? "نشط" : "غير نشط");
+  if (record.published !== undefined) {
+    parts.push(record.published ? "منشور" : "غير منشور");
+  }
+  if (record.active !== undefined) {
+    parts.push(record.active ? "نشط" : "غير نشط");
+  }
+
   return parts.join(" • ") || "لا توجد تفاصيل إضافية";
 }
 
@@ -267,17 +451,28 @@ function renderRecords() {
 
   const filtered = cachedRecords.filter((record) => {
     const text = [
-      record.id, record.name, record.title, record.studentName,
-      record.loginCode, record.classId, record.stage, record.subjectName,
-      record.teacherName, record.day, record.description
+      record.id,
+      record.name,
+      record.title,
+      record.studentName,
+      record.loginCode,
+      record.classId,
+      record.stage,
+      record.subjectName,
+      record.teacherName,
+      record.day,
+      record.description
     ].join(" ").toLowerCase();
+
     return text.includes(search);
   });
 
-  $("recordCount").textContent = `عدد السجلات المعروضة: ${filtered.length}`;
+  $("recordCount").textContent =
+    `عدد السجلات المعروضة: ${filtered.length}`;
 
   if (!filtered.length) {
-    recordsList.innerHTML = '<div class="empty-state">لا توجد سجلات مطابقة. يمكنك إضافة سجل جديد.</div>';
+    recordsList.innerHTML =
+      '<div class="empty-state">لا توجد سجلات مطابقة. يمكنك إضافة سجل جديد.</div>';
     return;
   }
 
@@ -306,13 +501,17 @@ function renderRecords() {
 
   recordsList.querySelectorAll("[data-edit]").forEach((button) => {
     button.addEventListener("click", () => {
-      const record = cachedRecords.find((item) => item.id === button.dataset.edit);
+      const record = cachedRecords.find(
+        (item) => item.id === button.dataset.edit
+      );
       if (record) openForm(record);
     });
   });
 
   recordsList.querySelectorAll("[data-delete]").forEach((button) => {
-    button.addEventListener("click", () => deleteRecord(button.dataset.delete));
+    button.addEventListener("click", () => {
+      deleteRecord(button.dataset.delete);
+    });
   });
 }
 
@@ -320,20 +519,32 @@ async function loadRecords() {
   const config = configs[currentSection];
   if (!config) return;
 
-  recordsList.innerHTML = '<div class="empty-state">جارٍ تحميل البيانات...</div>';
+  recordsList.innerHTML =
+    '<div class="empty-state">جارٍ تحميل البيانات...</div>';
 
   try {
-    const result = await getDocs(query(collection(db, config.collection), limit(500)));
-    cachedRecords = result.docs.map((item) => ({ id: item.id, ...item.data() }));
+    const result = await getDocs(
+      query(collection(db, config.collection), limit(500))
+    );
+
+    cachedRecords = result.docs.map((item) => ({
+      id: item.id,
+      ...item.data()
+    }));
 
     if (currentSection === "students") {
-      cachedRecords = cachedRecords.filter((item) => item.role === "student");
+      cachedRecords = cachedRecords.filter(
+        (item) => item.role === "student"
+      );
     }
 
     renderRecords();
   } catch (error) {
     console.error("Load records failed:", error);
-    recordsList.innerHTML = '<div class="empty-state">تعذر تحميل البيانات. راجع صلاحيات Firestore والاتصال.</div>';
+
+    recordsList.innerHTML =
+      '<div class="empty-state">تعذر تحميل البيانات. راجع صلاحيات Firestore والاتصال.</div>';
+
     showNotice(friendlyError(error), "error");
   }
 }
@@ -350,7 +561,9 @@ function createField(field, value) {
     input.type = "checkbox";
     input.id = `field-${field.name}`;
     input.name = field.name;
-    input.checked = value !== undefined ? Boolean(value) : Boolean(field.defaultValue);
+    input.checked = value !== undefined
+      ? Boolean(value)
+      : Boolean(field.defaultValue);
 
     const label = document.createElement("label");
     label.htmlFor = input.id;
@@ -369,6 +582,7 @@ function createField(field, value) {
 
   if (field.type === "select") {
     input = document.createElement("select");
+
     const placeholder = document.createElement("option");
     placeholder.value = "";
     placeholder.textContent = "اختر...";
@@ -380,6 +594,7 @@ function createField(field, value) {
       option.textContent = labelText;
       input.append(option);
     });
+
     input.value = value ?? "";
   } else if (field.type === "textarea") {
     input = document.createElement("textarea");
@@ -401,9 +616,12 @@ function createField(field, value) {
     input.title = "لا يمكن تغيير UID بعد إنشاء ملف الطالب.";
   }
 
-  if (field.name === "classId" && currentSection === "classes" && editingId) {
+  if (field.name === "classId" &&
+      currentSection === "classes" &&
+      editingId) {
     input.readOnly = true;
-    input.title = "تغيير معرّف الفصل يتطلب إعادة ربط السجلات المرتبطة به.";
+    input.title =
+      "تغيير معرّف الفصل يتطلب إعادة ربط السجلات المرتبطة به.";
   }
 
   wrapper.append(label, input);
@@ -425,17 +643,24 @@ function openForm(record = null) {
   editingId = record?.id ?? null;
   formFields.replaceChildren();
 
-  $("formTitle").textContent = editingId ? `تعديل: ${config.title}` : `إضافة سجل — ${config.title}`;
+  $("formTitle").textContent = editingId
+    ? `تعديل: ${config.title}`
+    : `إضافة سجل — ${config.title}`;
+
   $("formDescription").textContent = config.description;
 
   let recordData = record ? { ...record } : {};
 
-if (currentSection === "students" && record) {
-  recordData.uid = record.id;
-}
+  if (currentSection === "students" && record) {
+    recordData.uid = record.id;
+  }
 
   if (currentSection === "exams" && record) {
-    recordData.questionsJson = JSON.stringify(record.questions || [], null, 2);
+    recordData.questionsJson = JSON.stringify(
+      record.questions || [],
+      null,
+      2
+    );
     loadExamAnswersForEdit(record.id);
   }
 
@@ -444,33 +669,51 @@ if (currentSection === "students" && record) {
   });
 
   formSection.classList.remove("hidden");
-  formSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  formSection.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
 }
 
 let examAnswersForEdit = {};
 
 async function loadExamAnswersForEdit(examId) {
   examAnswersForEdit = {};
+
   try {
     const keySnapshot = await getDoc(doc(db, "examKeys", examId));
+
     if (keySnapshot.exists()) {
       examAnswersForEdit = keySnapshot.data().answers || {};
+
       const input = $("field-questionsJson");
+
       if (input) {
         try {
           const questions = JSON.parse(input.value || "[]");
+
           questions.forEach((question, index) => {
-            if (Object.prototype.hasOwnProperty.call(examAnswersForEdit, String(index))) {
-              question.correctAnswer = examAnswersForEdit[String(index)];
+            if (
+              Object.prototype.hasOwnProperty.call(
+                examAnswersForEdit,
+                String(index)
+              )
+            ) {
+              question.correctAnswer =
+                examAnswersForEdit[String(index)];
             }
           });
+
           input.value = JSON.stringify(questions, null, 2);
         } catch {}
       }
     }
   } catch (error) {
     console.error("Could not load answer key:", error);
-    showNotice("تعذر تحميل مفتاح الإجابة. تحقق من قواعد examKeys.", "error");
+    showNotice(
+      "تعذر تحميل مفتاح الإجابة. تحقق من قواعد examKeys.",
+      "error"
+    );
   }
 }
 
@@ -492,7 +735,11 @@ function readFormData() {
       value = input.value.trim();
     }
 
-    if (typeof value === "string" && value === "" && !field.required) {
+    if (
+      typeof value === "string" &&
+      value === "" &&
+      !field.required
+    ) {
       value = null;
     }
 
@@ -508,12 +755,15 @@ function readFormData() {
 
 function cleanNullValues(data) {
   return Object.fromEntries(
-    Object.entries(data).filter(([, value]) => value !== null && value !== undefined)
+    Object.entries(data).filter(
+      ([, value]) => value !== null && value !== undefined
+    )
   );
 }
 
 function validateExamQuestions(raw) {
   let questions;
+
   try {
     questions = JSON.parse(raw);
   } catch {
@@ -525,21 +775,36 @@ function validateExamQuestions(raw) {
   }
 
   const answers = {};
+
   const publicQuestions = questions.map((question, index) => {
-    if (!question || typeof question.text !== "string" || !question.text.trim()) {
+    if (
+      !question ||
+      typeof question.text !== "string" ||
+      !question.text.trim()
+    ) {
       throw new Error(`نص السؤال رقم ${index + 1} غير صحيح.`);
     }
 
     if (question.type === "mcq") {
-      if (!Array.isArray(question.options) || question.options.length < 2) {
-        throw new Error(`السؤال رقم ${index + 1}: أضف خيارين على الأقل.`);
+      if (!Array.isArray(question.options) ||
+          question.options.length < 2) {
+        throw new Error(
+          `السؤال رقم ${index + 1}: أضف خيارين على الأقل.`
+        );
       }
-      if (!Number.isInteger(question.correctAnswer) ||
-          question.correctAnswer < 0 ||
-          question.correctAnswer >= question.options.length) {
-        throw new Error(`السؤال رقم ${index + 1}: correctAnswer يجب أن يكون رقم خيار صحيحًا بدءًا من 0.`);
+
+      if (
+        !Number.isInteger(question.correctAnswer) ||
+        question.correctAnswer < 0 ||
+        question.correctAnswer >= question.options.length
+      ) {
+        throw new Error(
+          `السؤال رقم ${index + 1}: correctAnswer يجب أن يكون رقم خيار صحيحًا بدءًا من 0.`
+        );
       }
+
       answers[String(index)] = question.correctAnswer;
+
       return {
         type: "mcq",
         text: question.text.trim(),
@@ -549,13 +814,22 @@ function validateExamQuestions(raw) {
 
     if (question.type === "true_false") {
       if (typeof question.correctAnswer !== "boolean") {
-        throw new Error(`السؤال رقم ${index + 1}: correctAnswer يجب أن يكون true أو false.`);
+        throw new Error(
+          `السؤال رقم ${index + 1}: correctAnswer يجب أن يكون true أو false.`
+        );
       }
+
       answers[String(index)] = question.correctAnswer;
-      return { type: "true_false", text: question.text.trim() };
+
+      return {
+        type: "true_false",
+        text: question.text.trim()
+      };
     }
 
-    throw new Error(`نوع السؤال رقم ${index + 1} يجب أن يكون mcq أو true_false.`);
+    throw new Error(
+      `نوع السؤال رقم ${index + 1} يجب أن يكون mcq أو true_false.`
+    );
   });
 
   return { publicQuestions, answers };
@@ -576,14 +850,18 @@ async function saveRecord(event) {
       const uid = data.uid;
 
       if (!uid || uid.includes("/")) {
-        throw new Error("أدخل UID صحيحًا من Firebase Authentication.");
+        throw new Error(
+          "أدخل UID صحيحًا من Firebase Authentication."
+        );
       }
 
       const profileRef = doc(db, "users", uid);
       const existingProfile = await getDoc(profileRef);
 
       if (!editingId && existingProfile.exists()) {
-        throw new Error("يوجد ملف بالفعل لهذا UID. افتح الملف الموجود للتعديل.");
+        throw new Error(
+          "يوجد ملف بالفعل لهذا UID. افتح الملف الموجود للتعديل."
+        );
       }
 
       data = {
@@ -598,35 +876,49 @@ async function saveRecord(event) {
       await setDoc(profileRef, {
         ...data,
         updatedAt: serverTimestamp(),
-        ...(existingProfile.exists() ? {} : { createdAt: serverTimestamp() })
+        ...(existingProfile.exists()
+          ? {}
+          : { createdAt: serverTimestamp() })
       }, { merge: true });
 
     } else if (currentSection === "classes") {
       const classId = data.classId;
+
       if (!classId || classId.includes("/")) {
-        throw new Error("كود الفصل مطلوب ولا يجوز أن يحتوي على /.");
+        throw new Error(
+          "كود الفصل مطلوب ولا يجوز أن يحتوي على /."
+        );
       }
 
       const classRef = doc(db, "classes", classId);
 
       if (editingId && editingId !== classId) {
-        throw new Error("معرّف الفصل لا يمكن تغييره بعد إنشائه.");
+        throw new Error(
+          "معرّف الفصل لا يمكن تغييره بعد إنشائه."
+        );
       }
 
       const existing = await getDoc(classRef);
+
       if (!editingId && existing.exists()) {
-        throw new Error("كود الفصل موجود بالفعل. اختر كودًا مختلفًا.");
+        throw new Error(
+          "كود الفصل موجود بالفعل. اختر كودًا مختلفًا."
+        );
       }
 
       await setDoc(classRef, {
         ...data,
-        createdAt: existing.exists() ? (data.createdAt || null) : serverTimestamp(),
+        createdAt: existing.exists()
+          ? (data.createdAt || null)
+          : serverTimestamp(),
         updatedAt: serverTimestamp()
       }, { merge: true });
 
     } else if (currentSection === "exams") {
       const examQuestions = validateExamQuestions(data.questionsJson);
+
       delete data.questionsJson;
+
       data.questions = examQuestions.publicQuestions;
       data.totalMarks = Number(data.totalMarks);
       data.durationMinutes = Number(data.durationMinutes);
@@ -644,6 +936,7 @@ async function saveRecord(event) {
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         });
+
         examId = examRef.id;
       }
 
@@ -659,7 +952,10 @@ async function saveRecord(event) {
       };
 
       if (editingId) {
-        await updateDoc(doc(db, config.collection, editingId), payload);
+        await updateDoc(
+          doc(db, config.collection, editingId),
+          payload
+        );
       } else {
         await addDoc(collection(db, config.collection), {
           ...payload,
@@ -668,9 +964,14 @@ async function saveRecord(event) {
       }
     }
 
-    showNotice("تم حفظ البيانات في Firestore بنجاح.", "success");
+    showNotice(
+      "تم حفظ البيانات في Firestore بنجاح.",
+      "success"
+    );
+
     formSection.classList.add("hidden");
     editingId = null;
+
     await loadRecords();
     await refreshStats();
 
@@ -690,7 +991,9 @@ async function deleteRecord(id) {
   const record = cachedRecords.find((item) => item.id === id);
   const label = record ? getRecordTitle(record) : id;
 
-  if (!confirm(`هل تريد حذف "${label}"؟ لا يمكن التراجع عن الحذف.`)) return;
+  if (!confirm(`هل تريد حذف "${label}"؟ لا يمكن التراجع عن الحذف.`)) {
+    return;
+  }
 
   try {
     if (currentSection === "students") {
@@ -704,8 +1007,10 @@ async function deleteRecord(id) {
     }
 
     showNotice("تم حذف السجل من Firestore.", "success");
+
     await loadRecords();
     await refreshStats();
+
   } catch (error) {
     console.error("Delete failed:", error);
     showNotice(friendlyError(error), "error");
@@ -724,16 +1029,26 @@ async function refreshStats() {
 
   for (const [elementId, collectionName] of stats) {
     try {
-      const result = await getDocs(query(collection(db, collectionName), limit(500)));
+      const result = await getDocs(
+        query(collection(db, collectionName), limit(500))
+      );
+
       let count = result.size;
 
       if (collectionName === "users") {
-        count = result.docs.filter((item) => item.data().role === "student").length;
+        count = result.docs.filter(
+          (item) => item.data().role === "student"
+        ).length;
       }
 
-      $(elementId).textContent = result.size === 500 ? `${count}+` : String(count);
+      $(elementId).textContent =
+        result.size === 500 ? `${count}+` : String(count);
+
     } catch (error) {
-      console.warn(`Could not load ${collectionName} count:`, error);
+      console.warn(
+        `Could not load ${collectionName} count:`,
+        error
+      );
       $(elementId).textContent = "—";
     }
   }
@@ -749,40 +1064,81 @@ async function logout() {
 }
 
 document.querySelectorAll(".nav-item").forEach((button) => {
-  button.addEventListener("click", () => goToSection(button.dataset.section));
+  button.addEventListener("click", () => {
+    goToSection(button.dataset.section);
+  });
 });
 
 document.querySelectorAll("[data-go]").forEach((button) => {
-  button.addEventListener("click", () => goToSection(button.dataset.go));
+  button.addEventListener("click", () => {
+    goToSection(button.dataset.go);
+  });
 });
 
 $("addRecordBtn").addEventListener("click", () => openForm());
+
 $("refreshBtn").addEventListener("click", () => {
   loadRecords();
   refreshStats();
 });
+
 $("searchInput").addEventListener("input", renderRecords);
-$("cancelFormBtn").addEventListener("click", () => formSection.classList.add("hidden"));
-$("cancelFormBtn2").addEventListener("click", () => formSection.classList.add("hidden"));
+
+$("cancelFormBtn").addEventListener("click", () => {
+  formSection.classList.add("hidden");
+});
+
+$("cancelFormBtn2").addEventListener("click", () => {
+  formSection.classList.add("hidden");
+});
+
 recordForm.addEventListener("submit", saveRecord);
 $("logoutBtn").addEventListener("click", logout);
 
+// التحقق من جلسة الأدمن وتهيئة لوحة التحكم
 onAuthStateChanged(auth, async (user) => {
+  console.log("ADMIN CHECK:", {
+    hasUser: Boolean(user),
+    email: user?.email,
+    verifiedAsAdmin: user ? isAdminEmail(user.email) : false
+  });
+
   if (!user) {
-    window.location.replace("login.html");
+    authLoading.textContent =
+      "لا توجد جلسة دخول. جارٍ التحويل...";
+
+    window.location.replace("./login.html");
     return;
   }
 
   if (!isAdminEmail(user.email)) {
-    try { await signOut(auth); } catch {}
-    window.location.replace("login.html");
+    authLoading.textContent =
+      "هذا الحساب ليس ضمن حسابات الإدارة.";
+
+    console.error("Admin email rejected:", user.email);
+
+    await signOut(auth);
+    window.location.replace("./login.html");
     return;
   }
 
-  $("adminEmail").textContent = user.email || "مدير النظام";
+  $("adminEmail").textContent = user.email;
+
   authLoading.classList.add("hidden");
   adminApp.classList.remove("hidden");
 
-  await refreshStats();
-  goToSection("overview");
+  try {
+    await refreshStats();
+    goToSection("overview");
+  } catch (error) {
+    console.error(
+      "Admin dashboard initialization error:",
+      error
+    );
+
+    showNotice(
+      "تم التحقق من الأدمن، لكن تعذر تحميل بعض بيانات اللوحة.",
+      "error"
+    );
+  }
 });
