@@ -5,7 +5,9 @@ import {
   getAuth,
   signInWithEmailAndPassword,
   signOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 
 import {
@@ -15,7 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyC5ODDw3Cw9ZsHcAAGGdipl3oUNvlUG9Tw",
+  apiKey: "AIzaSyC5ODDwC3w9ZsHcAAGGdipl3oUNvlUG9Tw",
   authDomain: "egns-99c3b.firebaseapp.com",
   projectId: "egns-99c3b",
   storageBucket: "egns-99c3b.firebasestorage.app",
@@ -33,6 +35,8 @@ export {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence,
   doc,
   getDoc
 };
@@ -48,12 +52,6 @@ export function isAdminEmail(email) {
   );
 }
 
-/*
-  البريد الإلكتروني للإدارة يُستخدم كما هو.
-  باقي الحسابات تستخدم كودًا فريدًا، مثل STU001 أو TCH001.
-  هذا الكود يُحوّل إلى بريد داخلي لحساب Firebase Auth.
-  التحويل ليس بديلًا عن كلمة المرور أو صلاحيات Firestore.
-*/
 export function normalizeLoginIdentifier(identifier) {
   const value = String(identifier || "").trim();
 
