@@ -15,9 +15,7 @@ const loginForm = document.getElementById("loginForm");
 const identifierInput = document.getElementById("identifier");
 const passwordInput = document.getElementById("password");
 const messageElement = document.getElementById("loginMessage");
-const submitButton = loginForm?.querySelector(
-  'button[type="submit"]'
-);
+const submitButton = loginForm?.querySelector('button[type="submit"]');
 
 function showMessage(message, type = "error") {
   if (!messageElement) {
@@ -27,8 +25,8 @@ function showMessage(message, type = "error") {
 
   messageElement.textContent = message;
   messageElement.style.display = "block";
-  messageElement.style.color =
-    type === "success" ? "#187044" : "#b8202f";
+  messageElement.className =
+    type === "success" ? "form-success" : "form-error";
 }
 
 function setLoading(loading) {
@@ -36,38 +34,36 @@ function setLoading(loading) {
 
   submitButton.disabled = loading;
   submitButton.textContent = loading
-    ? "جارٍ تسجيل الدخول..."
-    : "تسجيل الدخول";
+    ? "جارٍ التحقق من الحساب..."
+    : "تسجيل الدخول ←";
 }
 
-function getFriendlyError(error) {
-  const code = error?.code || "";
-
+function friendlyError(error) {
   const errors = {
     "auth/invalid-credential":
-      "الكود أو البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+      "بيانات الدخول غير صحيحة.",
     "auth/user-not-found":
-      "الحساب غير موجود. راجع بيانات الدخول مع الإدارة.",
+      "بيانات الدخول غير صحيحة.",
     "auth/wrong-password":
-      "كلمة المرور غير صحيحة.",
+      "بيانات الدخول غير صحيحة.",
     "auth/invalid-email":
-      "صيغة البريد الإلكتروني غير صحيحة.",
+      "تعذّر التحقق من بيانات الحساب.",
     "auth/too-many-requests":
       "محاولات كثيرة. انتظر قليلًا ثم حاول مجددًا.",
     "auth/network-request-failed":
-      "تعذّر الاتصال بالإنترنت. تحقق من اتصالك وحاول مجددًا.",
+      "تعذّر الاتصال. تحقق من الإنترنت وحاول مجددًا.",
     "auth/user-disabled":
-      "هذا الحساب موقوف. راجع إدارة المدرسة."
+      "هذا الحساب موقوف. تواصل مع إدارة المدرسة."
   };
 
-  return errors[code] ||
-    "تعذّر تسجيل الدخول. تحقق من البيانات وحاول مجددًا.";
+  return errors[error?.code] ||
+    "حدث خطأ أثناء تسجيل الدخول. حاول مرة أخرى.";
 }
 
-async function getRoleAndDashboard(user) {
+async function resolveAccount(user) {
   const email = (user.email || "").trim().toLowerCase();
 
-  // حسابا الإدارة المحددان مسبقًا
+  // حسابا الإدارة العليا المحددان مسبقًا.
   if (isAdminEmail(email)) {
     return {
       role: "owner",
@@ -75,21 +71,21 @@ async function getRoleAndDashboard(user) {
     };
   }
 
-  // باقي المستخدمين: الدور يُقرأ من ملفهم في Firestore
+  // كل حساب آخر يجب أن يكون له ملف مستخدم في Firestore.
   const profileRef = doc(db, "users", user.uid);
-  const profileSnap = await getDoc(profileRef);
+  const profileSnapshot = await getDoc(profileRef);
 
-  if (!profileSnap.exists()) {
+  if (!profileSnapshot.exists()) {
     throw new Error(
-      "لم يتم إعداد ملف هذا الحساب بعد. تواصل مع إدارة المدرسة."
+      "الحساب غير مكتمل الإعداد. تواصل مع إدارة المدرسة."
     );
   }
 
-  const profile = profileSnap.data();
+  const profile = profileSnapshot.data();
 
   if (profile.active !== true) {
     throw new Error(
-      "هذا الحساب غير مفعّل حاليًا. تواصل مع إدارة المدرسة."
+      "الحساب غير مفعّل. تواصل مع إدارة المدرسة."
     );
   }
 
@@ -97,7 +93,7 @@ async function getRoleAndDashboard(user) {
 
   if (!dashboard) {
     throw new Error(
-      "لم يتم تحديد لوحة مناسبة لهذا الحساب. تواصل مع الإدارة."
+      "لم يتم تحديد لوحة لهذا الحساب. تواصل مع الإدارة."
     );
   }
 
@@ -115,13 +111,17 @@ if (loginForm) {
     const password = passwordInput?.value;
 
     if (!identifier || !password) {
-      showMessage("اكتب كود الحساب أو البريد وكلمة المرور.");
+      showMessage("أدخل بيانات الحساب وكلمة المرور.");
       return;
     }
 
     setLoading(true);
+    showMessage("");
+
+    let authenticatedUser = null;
 
     try {
+      // البريد يُستخدم كما هو، والكود يُحوّل وفق قاعدة موحدة.
       const email = normalizeLoginIdentifier(identifier);
 
       const credential = await signInWithEmailAndPassword(
@@ -130,28 +130,29 @@ if (loginForm) {
         password
       );
 
-      const user = credential.user;
+      authenticatedUser = credential.user;
 
-      let destination;
-
-      try {
-        const account = await getRoleAndDashboard(user);
-        destination = account.dashboard;
-      } catch (error) {
-        await signOut(auth);
-        throw error;
-      }
+      const account = await resolveAccount(authenticatedUser);
 
       showMessage("تم تسجيل الدخول بنجاح.", "success");
 
-      window.location.replace(destination);
+      window.location.replace(account.dashboard);
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("EGNS login error:", error);
+
+      // لا نترك جلسة مفتوحة لو تعذّر تحديد صلاحية الحساب.
+      if (authenticatedUser) {
+        try {
+          await signOut(auth);
+        } catch (signOutError) {
+          console.error("Sign out error:", signOutError);
+        }
+      }
 
       showMessage(
         error.message && !error.code
           ? error.message
-          : getFriendlyError(error)
+          : friendlyError(error)
       );
 
       setLoading(false);
