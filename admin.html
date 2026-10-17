@@ -3,193 +3,136 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#142c52">
   <title>لوحة الإدارة | EGNS Smart Campus</title>
-  <link rel="stylesheet" href="assets/css/style.css">
-
-  <style>
-    body { background: #f4f6fa; margin: 0; color: #17243b; }
-    .admin-header {
-      background: #142c52; color: white; padding: 18px 5%;
-      display: flex; justify-content: space-between; align-items: center;
-      gap: 15px; flex-wrap: wrap;
-    }
-    .admin-header h1 { margin: 0; font-size: 22px; }
-    .admin-header p { margin: 6px 0 0; color: #e2e8f2; font-size: 13px; }
-    .admin-header button, .action-button {
-      border: 0; border-radius: 8px; padding: 11px 16px;
-      cursor: pointer; font-weight: bold;
-    }
-    .logout-button { background: #b8202f; color: white; }
-    .admin-container { max-width: 1200px; margin: 28px auto; padding: 0 18px; }
-    .welcome { margin-bottom: 24px; }
-    .welcome h2 { margin-bottom: 8px; }
-    .welcome p { color: #65718a; }
-    .status-card {
-      background: white; border: 1px solid #e4e9f1; border-radius: 14px;
-      padding: 18px; margin-bottom: 24px;
-    }
-    .status-card strong { color: #142c52; }
-    .section-title { margin: 28px 0 14px; font-size: 19px; }
-    .admin-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
-    }
-    .admin-card {
-      background: white; border: 1px solid #e4e9f1; border-radius: 14px;
-      padding: 20px; box-shadow: 0 4px 15px #142c5208;
-    }
-    .admin-card .symbol { font-size: 28px; margin-bottom: 12px; }
-    .admin-card h3 { margin: 0 0 9px; color: #142c52; }
-    .admin-card p { color: #65718a; line-height: 1.7; font-size: 14px; }
-    .action-button { background: #142c52; color: white; }
-    .action-button:disabled { opacity: .55; cursor: not-allowed; }
-    .notice {
-      background: #fff8e9; border: 1px solid #f0dfb6; color: #6d5016;
-      border-radius: 10px; padding: 14px; line-height: 1.8; margin-top: 20px;
-    }
-    .footer { text-align: center; padding: 25px; color: #788399; font-size: 13px; }
-    @media (max-width: 520px) {
-      .admin-header { align-items: flex-start; }
-      .admin-header h1 { font-size: 18px; }
-    }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/admin.css">
 </head>
-
 <body>
-  <header class="admin-header">
-    <div>
-      <h1>EGNS Smart Campus</h1>
-      <p>لوحة تحكم إدارة المدرسة</p>
-    </div>
-    <button id="logoutBtn" class="logout-button" type="button">تسجيل الخروج</button>
-  </header>
+  <div id="authLoading" class="auth-loading">جارٍ التحقق من صلاحيات الدخول...</div>
 
-  <main class="admin-container">
-    <section class="welcome">
-      <h2>أهلًا بك في لوحة الإدارة</h2>
-      <p>إدارة المحتوى والخدمات التعليمية من مكان واحد.</p>
-    </section>
+  <div id="adminApp" class="app hidden">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">E</div>
+        <div>
+          <strong>EGNS</strong>
+          <small>SMART CAMPUS</small>
+        </div>
+      </div>
 
-    <section class="status-card">
-      <strong>الحساب الحالي:</strong>
-      <span id="adminEmail">جارٍ التحقق...</span>
-      <p id="authStatus">يتم التحقق من جلسة الدخول والصلاحيات.</p>
-    </section>
+      <div class="admin-label">لوحة التحكم الإدارية</div>
 
-    <h2 class="section-title">إدارة المدرسة</h2>
-    <section class="admin-grid">
-      <article class="admin-card">
-        <div class="symbol">👥</div>
-        <h3>الطلاب والمستخدمون</h3>
-        <p>تجهيز قسم بيانات الطلاب وحسابات الدخول ومراحلهم الدراسية.</p>
-        <button class="action-button" disabled>سيتم ربطه بقاعدة البيانات</button>
-      </article>
+      <nav id="adminNav" class="nav">
+        <button class="nav-item active" data-section="overview">⌂ <span>الرئيسية</span></button>
+        <button class="nav-item" data-section="classes">▦ <span>الفصول الدراسية</span></button>
+        <button class="nav-item" data-section="students">♙ <span>الطلاب وملفاتهم</span></button>
+        <button class="nav-item" data-section="announcements">▤ <span>الإعلانات</span></button>
+        <button class="nav-item" data-section="subjects">▣ <span>المواد الدراسية</span></button>
+        <button class="nav-item" data-section="lectures">▶ <span>المحاضرات</span></button>
+        <button class="nav-item" data-section="timetables">◷ <span>الجداول الدراسية</span></button>
+        <button class="nav-item" data-section="exams">✓ <span>الامتحانات</span></button>
+        <button class="nav-item" data-section="badges">✦ <span>الشارات</span></button>
+        <button class="nav-item" data-section="leaderboard">♛ <span>لوحة المتصدرين</span></button>
+      </nav>
 
-      <article class="admin-card">
-        <div class="symbol">👨‍🏫</div>
-        <h3>المعلمون</h3>
-        <p>قسم بيانات المعلمين والتخصصات ووسائل التواصل الوظيفية.</p>
-        <button class="action-button" disabled>قريبًا</button>
-      </article>
+      <div class="sidebar-footer">
+        <div class="secure-label">● اتصال مباشر بقاعدة البيانات</div>
+        <button id="logoutBtn" class="btn btn-logout">تسجيل الخروج</button>
+      </div>
+    </aside>
 
-      <article class="admin-card">
-        <div class="symbol">📚</div>
-        <h3>المواد الدراسية</h3>
-        <p>تنظيم المواد حسب المرحلة والصف الدراسي.</p>
-        <button class="action-button" disabled>قريبًا</button>
-      </article>
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <div class="eyebrow">EGNS / ADMINISTRATION</div>
+          <h1 id="pageTitle">الرئيسية</h1>
+          <p id="pageDescription">إدارة بيانات المدرسة ومحتواها من مكان واحد.</p>
+        </div>
+        <div class="admin-chip"><span class="status-dot"></span><span id="adminEmail">مدير النظام</span></div>
+      </header>
 
-      <article class="admin-card">
-        <div class="symbol">🗓️</div>
-        <h3>الجداول الدراسية</h3>
-        <p>إعداد جداول الحصص ومواعيد الدروس لكل فصل.</p>
-        <button class="action-button" disabled>قريبًا</button>
-      </article>
+      <div id="notice" class="notice hidden" role="status"></div>
 
-      <article class="admin-card">
-        <div class="symbol">🎥</div>
-        <h3>المحاضرات</h3>
-        <p>تنظيم روابط المحاضرات والمحتوى التعليمي.</p>
-        <button class="action-button" disabled>قريبًا</button>
-      </article>
+      <section id="overviewSection" class="page-section">
+        <div class="welcome-panel">
+          <div>
+            <span class="welcome-kicker">EGYPTIAN GERMAN NURSING SCHOOL</span>
+            <h2>مرحبًا بك في مركز الإدارة</h2>
+            <p>أنشئ المحتوى وعدّل البيانات، وسيتم حفظ التغييرات في Firestore مباشرة.</p>
+          </div>
+          <div class="welcome-symbol">EGNS</div>
+        </div>
 
-      <article class="admin-card">
-        <div class="symbol">📢</div>
-        <h3>الإعلانات</h3>
-        <p>تجهيز قسم أخبار المدرسة والتنبيهات المهمة.</p>
-        <button class="action-button" disabled>قريبًا</button>
-      </article>
+        <div class="stats-grid">
+          <article class="stat-card"><span>الفصول</span><strong id="statClasses">—</strong><small>classes</small></article>
+          <article class="stat-card"><span>الطلاب</span><strong id="statStudents">—</strong><small>users</small></article>
+          <article class="stat-card"><span>المواد</span><strong id="statSubjects">—</strong><small>subjects</small></article>
+          <article class="stat-card"><span>المحاضرات</span><strong id="statLectures">—</strong><small>lectures</small></article>
+          <article class="stat-card"><span>الامتحانات</span><strong id="statExams">—</strong><small>exams</small></article>
+          <article class="stat-card"><span>الإعلانات</span><strong id="statAnnouncements">—</strong><small>announcements</small></article>
+        </div>
 
-      <article class="admin-card">
-        <div class="symbol">📝</div>
-        <h3>الامتحانات والنتائج</h3>
-        <p>قسم الاختبارات الإلكترونية والدرجات والإحصائيات.</p>
-        <button class="action-button" disabled>قريبًا</button>
-      </article>
+        <div class="content-grid">
+          <article class="panel">
+            <div class="panel-heading"><div><h3>إدارة المحتوى</h3><p>اختر القسم الذي تريد إدارته.</p></div></div>
+            <div class="quick-grid">
+              <button class="quick-action" data-go="classes"><b>＋</b><span>إضافة فصل</span></button>
+              <button class="quick-action" data-go="students"><b>＋</b><span>ربط طالب</span></button>
+              <button class="quick-action" data-go="announcements"><b>＋</b><span>إعلان جديد</span></button>
+              <button class="quick-action" data-go="exams"><b>＋</b><span>إنشاء امتحان</span></button>
+            </div>
+          </article>
+          <article class="panel security-panel">
+            <div class="panel-heading"><div><h3>تنبيه أمني</h3><p>حسابات الدخول منفصلة عن ملفات الطلاب.</p></div></div>
+            <ul>
+              <li>أنشئ حساب Authentication للطالب من خطوة مستقلة.</li>
+              <li>استخدم UID الخاص بالحساب لإنشاء ملفه داخل <code>users/{UID}</code>.</li>
+              <li>لا تحفظ كلمة المرور في Firestore أو في ملف الموقع.</li>
+              <li>لا تمنح الطالب صلاحية تعديل دوره أو حالة تفعيله بنفسه.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
 
-      <article class="admin-card">
-        <div class="symbol">🏆</div>
-        <h3>النقاط ولوحة الشرف</h3>
-        <p>متابعة النقاط والإنجازات والتحديات التعليمية.</p>
-        <button class="action-button" disabled>قريبًا</button>
-      </article>
-    </section>
+      <section id="managementSection" class="page-section hidden">
+        <div class="panel">
+          <div class="panel-heading section-tools">
+            <div><h2 id="sectionHeading">إدارة البيانات</h2><p id="sectionSubheading">إضافة السجلات وتعديلها وحذفها.</p></div>
+            <button id="addRecordBtn" class="btn btn-primary">＋ إضافة سجل</button>
+          </div>
 
-    <div class="notice">
-      <strong>مهم:</strong> دي الواجهة الأساسية للوحة الإدارة. الأزرار المعطّلة مقصودة حاليًا؛ لن يتم تفعيلها إلا بعد بناء وظائفها وربطها بـ Firestore وتأمين صلاحياتها.
-    </div>
-  </main>
+          <div class="toolbar">
+            <input id="searchInput" type="search" placeholder="ابحث في السجلات..." aria-label="بحث">
+            <button id="refreshBtn" class="btn btn-light">تحديث البيانات</button>
+          </div>
 
-  <footer class="footer">EGNS Smart Campus © 2026</footer>
+          <div id="recordCount" class="record-count"></div>
+          <div id="recordsList" class="records-list">
+            <div class="empty-state">اختر قسمًا من القائمة.</div>
+          </div>
+        </div>
+      </section>
 
-  <script type="module">
-    import { auth, isAdminEmail } from "./assets/js/firebase.js";
-    import { onAuthStateChanged, signOut } from
-      "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+      <section id="formSection" class="panel form-panel hidden">
+        <div class="panel-heading">
+          <div><h2 id="formTitle">إضافة سجل</h2><p id="formDescription">أدخل البيانات المطلوبة.</p></div>
+          <button id="cancelFormBtn" class="btn btn-light">إلغاء</button>
+        </div>
+        <form id="recordForm">
+          <div id="formFields" class="form-grid"></div>
+          <div class="form-actions">
+            <button id="saveRecordBtn" class="btn btn-primary" type="submit">حفظ في قاعدة البيانات</button>
+            <button id="cancelFormBtn2" class="btn btn-light" type="button">إلغاء</button>
+          </div>
+          <p class="form-footnote">سيتم الحفظ مباشرة في Firestore بعد التحقق من صلاحيات الأدمن.</p>
+        </form>
+      </section>
+    </main>
+  </div>
 
-    const emailElement = document.getElementById("adminEmail");
-    const statusElement = document.getElementById("authStatus");
-    const logoutButton = document.getElementById("logoutBtn");
-    let redirecting = false;
-
-    onAuthStateChanged(auth, async (user) => {
-      if (redirecting) return;
-
-      if (!user) {
-        redirecting = true;
-        window.location.replace("login.html");
-        return;
-      }
-
-      const email = (user.email || "").toLowerCase().trim();
-
-      if (!isAdminEmail(email)) {
-        redirecting = true;
-        statusElement.textContent = "هذا الحساب غير مصرح له بدخول لوحة الإدارة.";
-        try {
-          await signOut(auth);
-        } finally {
-          window.location.replace("login.html");
-        }
-        return;
-      }
-
-      emailElement.textContent = email;
-      statusElement.textContent = "تم التحقق من الحساب. أقسام الإدارة قيد التجهيز.";
-    });
-
-    logoutButton.addEventListener("click", async () => {
-      logoutButton.disabled = true;
-      try {
-        await signOut(auth);
-        window.location.replace("login.html");
-      } catch (error) {
-        statusElement.textContent = "تعذر تسجيل الخروج. حاول مرة أخرى.";
-        logoutButton.disabled = false;
-      }
-    });
-  </script>
+  <script type="module" src="assets/js/admin.js"></script>
 </body>
 </html>
