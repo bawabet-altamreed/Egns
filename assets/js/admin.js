@@ -430,6 +430,10 @@ function openForm(record = null) {
 
   let recordData = record ? { ...record } : {};
 
+if (currentSection === "students" && record) {
+  recordData.uid = record.id;
+}
+
   if (currentSection === "exams" && record) {
     recordData.questionsJson = JSON.stringify(record.questions || [], null, 2);
     loadExamAnswersForEdit(record.id);
