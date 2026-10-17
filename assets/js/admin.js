@@ -1097,32 +1097,42 @@ $("logoutBtn").addEventListener("click", logout);
 
 // التحقق من جلسة الأدمن وتهيئة لوحة التحكم
 onAuthStateChanged(auth, async (user) => {
-  console.log("ADMIN CHECK:", {
-    hasUser: Boolean(user),
-    email: user?.email,
-    verifiedAsAdmin: user ? isAdminEmail(user.email) : false
+  console.info("ADMIN SESSION CHECK", {
+    userExists: Boolean(user),
+    email: user?.email || null,
+    isAdmin: user ? isAdminEmail(user.email) : false,
+    currentUrl: window.location.href
   });
 
   if (!user) {
-    authLoading.textContent =
-      "لا توجد جلسة دخول. جارٍ التحويل...";
+    console.warn("No authenticated user found on admin page.");
 
-    window.location.replace("./login.html");
+    window.location.replace(
+      new URL("./login.html", window.location.href).href
+    );
+
     return;
   }
 
   if (!isAdminEmail(user.email)) {
-    authLoading.textContent =
-      "هذا الحساب ليس ضمن حسابات الإدارة.";
+    console.warn("Authenticated user is not in the admin allowlist.");
 
-    console.error("Admin email rejected:", user.email);
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Sign-out error:", error);
+    }
 
-    await signOut(auth);
-    window.location.replace("./login.html");
+    window.location.replace(
+      new URL("./login.html", window.location.href).href
+    );
+
     return;
   }
 
-  $("adminEmail").textContent = user.email;
+  console.info("Admin access granted.");
+
+  $("adminEmail").textContent = user.email || "مدير النظام";
 
   authLoading.classList.add("hidden");
   adminApp.classList.remove("hidden");
@@ -1131,14 +1141,6 @@ onAuthStateChanged(auth, async (user) => {
     await refreshStats();
     goToSection("overview");
   } catch (error) {
-    console.error(
-      "Admin dashboard initialization error:",
-      error
-    );
-
-    showNotice(
-      "تم التحقق من الأدمن، لكن تعذر تحميل بعض بيانات اللوحة.",
-      "error"
-    );
+    console.error("Admin dashboard loading error:", error);
   }
 });
