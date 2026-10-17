@@ -1,51 +1,45 @@
 
 import {
   auth,
-  db,
   signInWithEmailAndPassword,
-  signOut,
-  doc,
-  getDoc,
   isAdminEmail,
   normalizeLoginIdentifier,
-  getDashboardPath
+  getUserProfile,
+  signOut
 } from "./firebase.js";
 
-const form = document.getElementById("loginForm");
+const loginForm = document.getElementById("loginForm");
 const identifierInput = document.getElementById("identifier");
 const passwordInput = document.getElementById("password");
-const message = document.getElementById("loginMessage");
+const loginMessage = document.getElementById("loginMessage");
 
-function showMessage(text, type = "error") {
-  if (!message) return;
-  message.textContent = text;
-  message.dataset.type = type;
-  message.hidden = false;
+function showMessage(message, isError = false) {
+  if (!loginMessage) return;
+  loginMessage.textContent = message;
+  loginMessage.style.color = isError ? "#b8202f" : "#16845b";
+  loginMessage.classList.remove("hidden");
 }
 
-function normalizeCode(value) {
-  return String(value || "").trim().toLowerCase();
-}
-
-form?.addEventListener("submit", async (event) => {
+loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  const identifier = identifierInput?.value.trim() || "";
-  const password = passwordInput?.value || "";
+  const identifier = identifierInput.value.trim();
+  const password = passwordInput.value;
 
   if (!identifier || !password) {
-    showMessage("اكتب بيانات الدخول كاملة.");
+    showMessage("اكتب الإيميل أو كود الدخول وكلمة المرور.", true);
     return;
   }
 
-  const submitButton = form.querySelector('[type="submit"]');
+  const submitButton = loginForm.querySelector(
+    'button[type="submit"], input[type="submit"]'
+  );
+
+  if (submitButton) submitButton.disabled = true;
+  showMessage("جارٍ تسجيل الدخول...");
 
   try {
-    if (submitButton) submitButton.disabled = true;
-    if (message) message.hidden = true;
-
     const email = normalizeLoginIdentifier(identifier);
-
     const credential = await signInWithEmailAndPassword(
       auth,
       email,
@@ -53,63 +47,70 @@ form?.addEventListener("submit", async (event) => {
     );
 
     const user = credential.user;
-    let role;
-    let dashboard;
+    const userEmail = (user.email || "").trim().toLowerCase();
 
-    if (isAdminEmail(user.email)) {
-      // حسابات الإدارة المحددة مسبقًا فقط.
-      role = user.email.toLowerCase() === "dr.tamer@egns.com"
-        ? "owner"
-        : "director";
-
-      dashboard = getDashboardPath(role);
-    } else {
-      const snapshot = await getDoc(doc(db, "users", user.uid));
-
-      if (!snapshot.exists()) {
-        throw new Error("لا يوجد ملف صلاحيات لهذا الحساب. تواصل مع إدارة المدرسة.");
-      }
-
-      const profile = snapshot.data();
-
-      if (profile.active !== true) {
-        throw new Error("هذا الحساب غير نشط. تواصل مع إدارة المدرسة.");
-      }
-
-      // لا نسمح بالدخول بكود لا يطابق ملف المستخدم.
-      if (
-        !identifier.includes("@") &&
-        normalizeCode(profile.loginCode) !== normalizeCode(identifier)
-      ) {
-        throw new Error("كود الحساب غير مطابق للملف المسجل.");
-      }
-
-      role = String(profile.role || "").trim();
-      dashboard = getDashboardPath(role);
-
-      if (!dashboard) {
-        throw new Error("صلاحية الحساب غير صحيحة. راجع إدارة المدرسة.");
-      }
+    // الأدمن لا يحتاج إلى مستند users/{uid} للدخول إلى لوحة الإدارة.
+    if (isAdminEmail(userEmail)) {
+      showMessage("تم تسجيل الدخول. جارٍ فتح لوحة الإدارة...");
+      window.location.replace("./admin.html");
+      return;
     }
 
-    window.location.replace(dashboard);
+    // بقية الحسابات تحتاج إلى ملف مستخدم نشط.
+    const profile = await getUserProfile(user.uid);
+
+    if (!profile || profile.active !== true) {
+      await signOut(auth);
+      showMessage("الحساب غير مفعّل أو لا يوجد له ملف مستخدم.", true);
+      return;
+    }
+
+    if (
+      identifier.includes("@") === false &&
+      profile.loginCode &&
+      profile.loginCode.toLowerCase() !== identifier.toLowerCase()
+    ) {
+      await signOut(auth);
+      showMessage("كود الدخول لا يطابق ملف المستخدم.", true);
+      return;
+    }
+
+    const routes = {
+      owner: "admin.html",
+      director: "admin.html",
+      student_affairs: "staff.html",
+      exams_affairs: "staff.html",
+      employee: "staff.html",
+      worker: "staff.html",
+      teacher: "teacher.html",
+      student: "dashboard.html",
+      parent: "parent.html"
+    };
+
+    const destination = routes[profile.role];
+
+    if (!destination) {
+      await signOut(auth);
+      showMessage("لا توجد صفحة محددة لهذا الدور.", true);
+      return;
+    }
+
+    showMessage("تم تسجيل الدخول. جارٍ فتح حسابك...");
+    window.location.replace(`./${destination}`);
+
   } catch (error) {
-    if (auth.currentUser) {
-      await signOut(auth).catch(() => {});
-    }
-
-    const knownErrors = {
-      "auth/invalid-credential": "بيانات الدخول غير صحيحة.",
-      "auth/user-not-found": "بيانات الدخول غير صحيحة.",
-      "auth/wrong-password": "بيانات الدخول غير صحيحة.",
-      "auth/too-many-requests": "محاولات كثيرة. انتظر قليلًا ثم حاول مرة أخرى.",
-      "auth/network-request-failed": "تعذر الاتصال. تحقق من الإنترنت."
+    console.error("Login error:", error);
+    const messages = {
+      "auth/invalid-credential": "الإيميل أو كلمة المرور غير صحيحة.",
+      "auth/user-not-found": "الحساب غير موجود.",
+      "auth/wrong-password": "كلمة المرور غير صحيحة.",
+      "auth/too-many-requests": "محاولات كثيرة. حاول لاحقًا.",
+      "auth/network-request-failed": "تحقق من اتصال الإنترنت."
     };
 
     showMessage(
-      knownErrors[error.code] ||
-      error.message ||
-      "تعذر تسجيل الدخول. حاول مرة أخرى."
+      messages[error.code] || `تعذر إكمال تسجيل الدخول: ${error.message}`,
+      true
     );
   } finally {
     if (submitButton) submitButton.disabled = false;
