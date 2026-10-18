@@ -1,4 +1,5 @@
 
+
 import {
   auth,
   db,
@@ -51,10 +52,6 @@ let cachedRecords = [];
 let noticeTimer = null;
 let examAnswersForEdit = {};
 
-/*
- * تطبيق Firebase ثانوي لإنشاء حسابات الطلاب.
- * يحافظ على جلسة الأدمن في التطبيق الأساسي.
- */
 let studentAuth;
 
 function getStudentAuth() {
@@ -74,36 +71,6 @@ function getStudentAuth() {
   return studentAuth;
 }
 
-  // إعادة استخدام التطبيق الثانوي إن كان قد أُنشئ بالفعل.
-  const apps = [
-    ...document.querySelectorAll("script")
-  ];
-
-  void apps;
-  void existingApp;
-
-  let secondaryApp;
-
-  try {
-    secondaryApp = initializeApp(
-      getApp().options,
-      appName
-    );
-  } catch (error) {
-    if (error.code === "app/duplicate-app") {
-      // التطبيق موجود بالفعل؛ نبحث عنه في قائمة التطبيقات.
-      // getApps مستورد أدناه بالطريقة نفسها.
-      throw new Error(
-        "تطبيق إنشاء حسابات الطلاب موجود بالفعل. أعد تحميل الصفحة."
-      );
-    }
-    throw error;
-  }
-
-  studentAuth = getAuth(secondaryApp);
-  return studentAuth;
-}
-
 const stages = [
   ["الأول الثانوي التمريض", "الأول الثانوي التمريض"],
   ["الثاني الثانوي التمريض", "الثاني الثانوي التمريض"],
@@ -111,6 +78,7 @@ const stages = [
   ["الأول معهد", "الأول معهد"],
   ["الثاني معهد", "الثاني معهد"]
 ];
+
 
 const configs = {
   classes: {
