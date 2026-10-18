@@ -380,3 +380,74 @@ label { display: block; color: #3d4c61; font-size: 12px; font-weight: 800; margi
   .record-actions { width: 100%; }
   .record-actions button { flex: 1; }
 }
+
+
+/* إضافات لوحة الإدارة */
+.hidden {
+  display: none !important;
+}
+
+.field {
+  min-width: 0;
+}
+
+.field input,
+.field select,
+.field textarea {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  font: inherit;
+}
+
+.field small {
+  display: block;
+  margin-top: 6px;
+  line-height: 1.7;
+  opacity: 0.75;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.record-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.record-main code {
+  overflow-wrap: anywhere;
+  direction: ltr;
+  unicode-bidi: plaintext;
+}
+
+@media (max-width: 760px) {
+  .topbar,
+  .section-tools {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .toolbar input {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .record-card {
+    gap: 12px;
+  }
+}
