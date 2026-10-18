@@ -1,156 +1,119 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#142c52">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>لوحة الإدارة | EGNS Smart Campus</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/admin.css">
+  <link rel="stylesheet" href="assets/css/student.css">
+  <script type="module" src="assets/js/admin.js"></script>
 </head>
 <body>
-  <div id="authLoading" class="auth-loading">جارٍ التحقق من صلاحيات الدخول...</div>
+  <main class="main-area">
+    <header class="topbar">
+      <div>
+        <h1 class="page-heading">EGNS Smart Campus</h1>
+        <p class="page-subtitle">لوحة إدارة المدرسة</p>
+      </div>
+      <button id="adminLogout" class="btn btn-red">تسجيل الخروج</button>
+    </header>
 
-  <div id="adminApp" class="app hidden">
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="brand-mark">E</div>
-        <div><strong>EGNS</strong><small>SMART CAMPUS</small></div>
+    <section class="welcome-banner">
+      <h2>مركز إدارة المدرسة</h2>
+      <p>إدارة الحسابات والفصول والمواد والإعلانات والجداول والامتحانات من مكان واحد.</p>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading"><div>
+        <h2>إنشاء حساب جديد</h2>
+        <p>طالب أو معلم أو موظف أو إداري</p>
+      </div></div>
+
+      <form id="accountForm" class="profile-list">
+        <label class="profile-field">الاسم الكامل
+          <input name="name" required maxlength="100" placeholder="الاسم بالكامل">
+        </label>
+        <label class="profile-field">كود الدخول
+          <input name="loginCode" required minlength="3" maxlength="64"
+            pattern="[A-Za-z0-9._-]+" placeholder="مثال: std1001">
+        </label>
+        <label class="profile-field">كلمة المرور المؤقتة
+          <input name="password" type="password" required minlength="6"
+            autocomplete="new-password">
+        </label>
+        <label class="profile-field">نوع الحساب
+          <select name="role" required>
+            <option value="student">طالب</option>
+            <option value="teacher">معلم</option>
+            <option value="employee">موظف</option>
+            <option value="student_affairs">شؤون طلاب</option>
+            <option value="exams_affairs">شؤون امتحانات</option>
+          </select>
+        </label>
+        <label class="profile-field">المرحلة الدراسية
+          <select name="stage">
+            <option value="">غير محددة</option>
+            <option>الأول الثانوي التمريض</option>
+            <option>الثاني الثانوي التمريض</option>
+            <option>الثالث الثانوي التمريض</option>
+            <option>الأول معهد</option>
+            <option>الثاني معهد</option>
+          </select>
+        </label>
+        <label class="profile-field">الفصل / كود الفصل
+          <input name="classId" placeholder="مثال: class-1a">
+        </label>
+        <label class="profile-field">اسم الفصل
+          <input name="className" placeholder="مثال: 2/أ">
+        </label>
+        <div class="profile-field">
+          <button class="btn" type="submit">إنشاء الحساب</button>
+        </div>
+      </form>
+      <div id="accountMessage" aria-live="polite"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading"><div>
+        <h2>إدارة بيانات النظام</h2>
+        <p>اختر مجموعة، ثم أضف مستندًا أو عدّل مستندًا موجودًا بصيغة JSON.</p>
+      </div></div>
+
+      <div class="profile-list">
+        <label class="profile-field">مجموعة البيانات
+          <select id="collectionSelect">
+            <option value="users">الحسابات users</option>
+            <option value="classes">الفصول classes</option>
+            <option value="subjects">المواد subjects</option>
+            <option value="announcements">الإعلانات announcements</option>
+            <option value="timetables">الجداول timetables</option>
+            <option value="exams">الامتحانات exams</option>
+            <option value="examKeys">مفاتيح الإجابات examKeys</option>
+            <option value="examAttempts">محاولات الامتحان examAttempts</option>
+            <option value="badges">الشارات badges</option>
+            <option value="leaderboard">لوحة الشرف leaderboard</option>
+          </select>
+        </label>
+        <label class="profile-field">معرّف المستند
+          <input id="documentId" placeholder="اتركه فارغًا لإنشاء معرّف تلقائي">
+        </label>
       </div>
 
-      <div class="admin-label">مركز التحكم الرئيسي</div>
-      <nav id="adminNav" class="nav">
-        <button class="nav-item active" data-section="overview">⌂ <span>الرئيسية والإحصائيات</span></button>
-        <button class="nav-item" data-section="classes">▦ <span>الفصول الدراسية</span></button>
-        <button class="nav-item" data-section="students">♙ <span>إدارة الطلاب</span></button>
-        <button class="nav-item" data-section="teachers">♟ <span>إدارة المعلمين</span></button>
-        <button class="nav-item" data-section="employees">♙ <span>إدارة الموظفين</span></button>
-        <button class="nav-item" data-section="subjects">▣ <span>المواد الدراسية</span></button>
-        <button class="nav-item" data-section="announcements">▤ <span>الإعلانات</span></button>
-        <button class="nav-item" data-section="timetables">◷ <span>الجداول الدراسية</span></button>
-        <button class="nav-item" data-section="exams">✓ <span>إدارة الامتحانات</span></button>
-        <button class="nav-item" data-section="examAttempts">☷ <span>محاولات ونتائج الامتحانات</span></button>
-        <button class="nav-item" data-section="badges">✦ <span>الشارات والإنجازات</span></button>
-        <button class="nav-item" data-section="leaderboard">♛ <span>لوحة المتصدرين</span></button>
-      </nav>
-
-      <div class="sidebar-footer">
-        <div class="secure-label">● متصل بقاعدة بيانات المدرسة</div>
-        <button id="logoutBtn" class="btn btn-logout">تسجيل الخروج</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:15px 0">
+        <button id="loadRecords" class="btn" type="button">تحميل السجلات</button>
+        <button id="newRecord" class="btn btn-light" type="button">مستند جديد</button>
+        <button id="saveRecord" class="btn" type="button">حفظ المستند</button>
+        <button id="deleteRecord" class="btn btn-red" type="button">حذف المستند</button>
       </div>
-    </aside>
 
-    <main class="main">
-      <header class="topbar">
-        <div>
-          <div class="eyebrow">EGNS / SMART CAMPUS / ADMIN</div>
-          <h1 id="pageTitle">الرئيسية والإحصائيات</h1>
-          <p id="pageDescription">مركز التحكم في بيانات المنصة ومحتواها.</p>
-        </div>
-        <div class="admin-chip">
-          <span class="status-dot"></span>
-          <span id="adminEmail">مدير النظام</span>
-        </div>
-      </header>
+      <label class="profile-field">محتوى المستند (JSON)
+        <textarea id="recordJson" rows="12" spellcheck="false"
+          style="width:100%;direction:ltr;text-align:left;font-family:monospace"
+          placeholder='{"title":"مثال","active":true}'></textarea>
+      </label>
 
-      <div id="notice" class="notice hidden" role="status" aria-live="polite"></div>
-
-      <section id="overviewSection" class="page-section">
-        <div class="welcome-panel">
-          <div>
-            <span class="welcome-kicker">EGYPTIAN GERMAN NURSING SCHOOL</span>
-            <h2>مركز الإدارة الرئيسي</h2>
-            <p>إدارة الحسابات والفصول والمحتوى والامتحانات والنتائج من مكان واحد.</p>
-          </div>
-          <div class="welcome-symbol">EGNS</div>
-        </div>
-
-        <div class="stats-grid">
-          <article class="stat-card"><span>الفصول</span><strong id="statClasses">—</strong><small>classes</small></article>
-          <article class="stat-card"><span>الطلاب</span><strong id="statStudents">—</strong><small>student accounts</small></article>
-          <article class="stat-card"><span>المعلمون</span><strong id="statTeachers">—</strong><small>teacher accounts</small></article>
-          <article class="stat-card"><span>الموظفون</span><strong id="statEmployees">—</strong><small>employee accounts</small></article>
-          <article class="stat-card"><span>المواد</span><strong id="statSubjects">—</strong><small>subjects</small></article>
-          <article class="stat-card"><span>الامتحانات</span><strong id="statExams">—</strong><small>exams</small></article>
-          <article class="stat-card"><span>المحاولات</span><strong id="statAttempts">—</strong><small>exam attempts</small></article>
-          <article class="stat-card"><span>الإعلانات</span><strong id="statAnnouncements">—</strong><small>announcements</small></article>
-        </div>
-
-        <div class="content-grid">
-          <article class="panel">
-            <div class="panel-heading">
-              <div><h3>اختصارات الإدارة</h3><p>انتقل مباشرة إلى القسم المطلوب.</p></div>
-            </div>
-            <div class="quick-grid">
-              <button class="quick-action" data-go="classes"><b>＋</b><span>إضافة فصل</span></button>
-              <button class="quick-action" data-go="students"><b>＋</b><span>إنشاء حساب طالب</span></button>
-              <button class="quick-action" data-go="teachers"><b>＋</b><span>إنشاء حساب معلم</span></button>
-              <button class="quick-action" data-go="employees"><b>＋</b><span>إنشاء حساب موظف</span></button>
-              <button class="quick-action" data-go="announcements"><b>＋</b><span>إعلان جديد</span></button>
-              <button class="quick-action" data-go="exams"><b>＋</b><span>إدارة الامتحانات</span></button>
-            </div>
-          </article>
-
-          <article class="panel security-panel">
-            <div class="panel-heading">
-              <div><h3>ضوابط الإدارة</h3><p>حسابات الدخول منفصلة عن بيانات Firestore.</p></div>
-            </div>
-            <ul>
-              <li>إنشاء الحسابات يتم من لوحة الإدارة فقط.</li>
-              <li>كلمات المرور لا تُحفظ داخل مستندات Firestore.</li>
-              <li>الإجابات الصحيحة للامتحانات لا تُعرض للطلاب.</li>
-              <li>تعطيل الحساب يمنع الدخول بعد التحقق من حالة الحساب.</li>
-              <li>حذف ملف المستخدم لا يعني حذف حساب Firebase Authentication.</li>
-            </ul>
-          </article>
-        </div>
-      </section>
-
-      <section id="managementSection" class="page-section hidden">
-        <div class="panel">
-          <div class="panel-heading section-tools">
-            <div>
-              <h2 id="sectionHeading">إدارة البيانات</h2>
-              <p id="sectionSubheading">عرض السجلات وتعديلها.</p>
-            </div>
-            <button id="addRecordBtn" class="btn btn-primary">＋ إضافة سجل</button>
-          </div>
-
-          <div class="toolbar">
-            <input id="searchInput" type="search" placeholder="ابحث في السجلات..." aria-label="بحث">
-            <button id="refreshBtn" class="btn btn-light" type="button">تحديث البيانات</button>
-          </div>
-
-          <div id="recordCount" class="record-count"></div>
-          <div id="recordsList" class="records-list">
-            <div class="empty-state">اختر قسمًا من القائمة.</div>
-          </div>
-        </div>
-      </section>
-
-      <section id="formSection" class="panel form-panel hidden">
-        <div class="panel-heading">
-          <div>
-            <h2 id="formTitle">إضافة سجل</h2>
-            <p id="formDescription">أدخل البيانات المطلوبة.</p>
-          </div>
-          <button id="cancelFormBtn" class="btn btn-light" type="button">إلغاء</button>
-        </div>
-
-        <form id="recordForm">
-          <div id="formFields" class="form-grid"></div>
-          <div class="form-actions">
-            <button id="saveRecordBtn" class="btn btn-primary" type="submit">حفظ البيانات</button>
-            <button id="cancelFormBtn2" class="btn btn-light" type="button">إلغاء</button>
-          </div>
-          <p class="form-footnote">لا تشارك كلمات المرور أو بيانات دخول الأدمن مع أي شخص.</p>
-        </form>
-      </section>
-    </main>
-  </div>
-
-  <script type="module" src="assets/js/admin.js"></script>
+      <div id="recordMessage" aria-live="polite"></div>
+      <div id="recordsList" class="cards-grid" style="margin-top:16px"></div>
+    </section>
+  </main>
 </body>
 </html>
