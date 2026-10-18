@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>لوحة المعلم | EGNS</title>
+  <link rel="stylesheet" href="assets/css/student.css">
+  <script type="module" src="assets/js/teacher.js"></script>
+</head>
+<body>
+  <main class="main-area">
+    <header class="topbar">
+      <div>
+        <h1 class="page-heading">لوحة المعلم</h1>
+        <p class="page-subtitle">إدارة الامتحانات ومتابعة النتائج</p>
+      </div>
+      <button id="teacherLogout" class="btn btn-red">تسجيل الخروج</button>
+    </header>
+
+    <section class="welcome-banner">
+      <h2 id="teacherGreeting">أهلًا بك</h2>
+      <p>أنشئ امتحانات لفصولك وتابع المحاولات والنتائج المسجلة.</p>
+    </section>
+
+    <section class="panel">
+      <h2>إنشاء امتحان</h2>
+      <form id="examForm" style="display:grid;gap:12px;margin-top:15px">
+        <label class="profile-field">اسم الامتحان
+          <input name="title" required maxlength="150">
+        </label>
+
+        <label class="profile-field">المادة
+          <input name="subjectName" required>
+        </label>
+
+        <div class="profile-list">
+          <label class="profile-field">المرحلة
+            <select name="stage" required>
+              <option>الأول الثانوي التمريض</option>
+              <option>الثاني الثانوي التمريض</option>
+              <option>الثالث الثانوي التمريض</option>
+              <option>الأول معهد</option>
+              <option>الثاني معهد</option>
+            </select>
+          </label>
+          <label class="profile-field">كود الفصل
+            <input name="classId" required placeholder="مثال: class-2a">
+          </label>
+        </div>
+
+        <div class="profile-list">
+          <label class="profile-field">مدة الامتحان بالدقائق
+            <input name="durationMinutes" type="number" min="1" max="240"
+              value="30" required>
+          </label>
+          <label class="profile-field">الدرجة النهائية
+            <input name="totalMarks" type="number" min="1" max="1000"
+              value="10" required>
+          </label>
+        </div>
+
+        <label class="profile-field">الأسئلة بصيغة JSON
+          <textarea name="questions" rows="14" required spellcheck="false"
+            style="width:100%;direction:ltr;text-align:left;font-family:monospace"
+            placeholder='[
+  {
+    "text": "ما عاصمة مصر؟",
+    "options": ["القاهرة", "الإسكندرية", "طنطا", "أسوان"],
+    "correctAnswer": 0,
+    "marks": 1
+  }
+]'></textarea>
+        </label>
+
+        <p class="page-subtitle">
+          اكتب كل سؤال مع أربعة اختيارات، واجعل correctAnswer رقم الاختيار الصحيح
+          بدءًا من الصفر: 0 أو 1 أو 2 أو 3.
+        </p>
+
+        <label><input name="active" type="checkbox" checked> نشر الامتحان فور الحفظ</label>
+        <button class="btn" type="submit">حفظ الامتحان</button>
+      </form>
+      <div id="teacherMessage" aria-live="polite"></div>
+    </section>
+
+    <section class="panel">
+      <h2>امتحاناتي</h2>
+      <button id="loadTeacherExams" class="btn" type="button">تحديث القائمة</button>
+      <div id="teacherExams" class="cards-grid" style="margin-top:15px"></div>
+    </section>
+
+    <section class="panel">
+      <h2>النتائج والمحاولات</h2>
+      <button id="loadTeacherResults" class="btn" type="button">عرض النتائج</button>
+      <div id="teacherResults" style="margin-top:15px"></div>
+    </section>
+  </main>
+</body>
+</html>
