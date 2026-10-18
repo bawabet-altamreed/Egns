@@ -1051,65 +1051,108 @@ async function logout() {
   }
 }
 
+
+function bindClick(id, callback) {
+  const element = $(id);
+
+  if (!element) {
+    console.error(`Admin HTML element missing: #${id}`);
+    return;
+  }
+
+  element.addEventListener("click", callback);
+}
+
 document.querySelectorAll(".nav-item").forEach((button) => {
-  button.addEventListener("click", () => goToSection(button.dataset.section));
+  button.addEventListener("click", () => {
+    goToSection(button.dataset.section);
+  });
 });
 
 document.querySelectorAll("[data-go]").forEach((button) => {
-  button.addEventListener("click", () => goToSection(button.dataset.go));
+  button.addEventListener("click", () => {
+    goToSection(button.dataset.go);
+  });
 });
 
-$("addRecordBtn").addEventListener("click", () => openForm());
+bindClick("addRecordBtn", () => openForm());
 
-$("refreshBtn").addEventListener("click", () => {
+bindClick("refreshBtn", () => {
   loadRecords();
   refreshStats();
 });
 
-$("searchInput").addEventListener("input", renderRecords);
+const searchInput = $("searchInput");
+if (searchInput) {
+  searchInput.addEventListener("input", renderRecords);
+}
 
-$("cancelFormBtn").addEventListener("click", () => {
-  formSection.classList.add("hidden");
+bindClick("cancelFormBtn", () => {
+  formSection?.classList.add("hidden");
 });
 
-$("cancelFormBtn2").addEventListener("click", () => {
-  formSection.classList.add("hidden");
+bindClick("cancelFormBtn2", () => {
+  formSection?.classList.add("hidden");
 });
 
-recordForm.addEventListener("submit", saveRecord);
-$("logoutBtn").addEventListener("click", logout);
+if (recordForm) {
+  recordForm.addEventListener("submit", saveRecord);
+} else {
+  console.error("Admin HTML element missing: #recordForm");
+}
 
-onAuthStateChanged(auth, async (user) => {
-  console.info("ADMIN SESSION CHECK", {
-    userExists: Boolean(user),
-    email: user?.email || null,
-    isAdmin: user ? isAdminEmail(user.email) : false
-  });
+bindClick("logoutBtn", logout);
 
-  if (!user) {
-    window.location.replace(new URL("./login.html", window.location.href).href);
-    return;
-  }
+onAuthStateChanged(
+  auth,
+  async (user) => {
+    console.info("ADMIN SESSION CHECK", {
+      userExists: Boolean(user),
+      email: user?.email || null,
+      isAdmin: user ? isAdminEmail(user.email) : false
+    });
 
-  if (!isAdminEmail(user.email)) {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      console.error("Sign-out error:", error);
+    if (!user) {
+      window.location.replace(
+        new URL("./login.html", window.location.href).href
+      );
+      return;
     }
 
-    window.location.replace(new URL("./login.html", window.location.href).href);
-    return;
-  }
+    if (!isAdminEmail(user.email)) {
+      try {
+        await signOut(auth);
+      } catch (error) {
+        console.error("Sign-out error:", error);
+      }
 
-  $("adminEmail").textContent = user.email || "مدير النظام";
-  authLoading.classList.add("hidden");
-  adminApp.classList.remove("hidden");
+      window.location.replace(
+        new URL("./login.html", window.location.href).href
+      );
+      return;
+    }
 
-  try {
-    await refreshStats();
-    goToSection("overview");
-  } catch (error) {
-    console.error("Admin dashboard loading error:", error);
+    if ($("adminEmail")) {
+      $("adminEmail").textContent = user.email || "مدير النظام";
+    }
+
+    authLoading?.classList.add("hidden");
+    adminApp?.classList.remove("hidden");
+
+    try {
+      await refreshStats();
+      goToSection("overview");
+    } catch (error) {
+      console.error("Admin dashboard loading error:", error);
+      showNotice(friendlyError(error), "error");
+    }
+  },
+  (error) => {
+    console.error("Admin authentication listener failed:", error);
+
+    if (authLoading) {
+      authLoading.textContent =
+        "تعذر التحقق من تسجيل الدخول. افتح Console لمعرفة السبب.";
+    }
   }
-});
+);
