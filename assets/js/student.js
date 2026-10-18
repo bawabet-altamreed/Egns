@@ -1,151 +1,86 @@
-
 import {
-  auth,
-  db,
-  onAuthStateChanged,
-  signOut,
-  doc,
-  getDoc
+  auth, db, onAuthStateChanged, signOut, isAdminEmail,
+  doc, getDoc, collection, getDocs, query, where, limit,
+  addDoc, serverTimestamp
 } from "./firebase.js";
 
-import {
-  collection,
-  getDocs,
-  query,
-  where,
-  limit
-} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
-
-const appRoot = document.getElementById("app");
+const $ = id => document.getElementById(id);
+const root = $("app");
 const page = document.body.dataset.page || "dashboard";
 
-const pageInfo = {
-  dashboard: {
-    title: "الرئيسية",
-    subtitle: "ملخص حسابك الدراسي"
-  },
-  schedule: {
-    title: "الجدول الدراسي",
-    subtitle: "مواعيد الدراسة والمواد"
-  },
-  announcements: {
-    title: "الإعلانات",
-    subtitle: "آخر أخبار وتنبيهات المدرسة"
-  },
-  exams: {
-    title: "الامتحانات",
-    subtitle: "الامتحانات المتاحة لصفك"
-  },
-  results: {
-    title: "النتائج",
-    subtitle: "ملخص محاولاتك ودرجاتك المنشورة"
-  },
-  leaderboard: {
-    title: "لوحة الشرف",
-    subtitle: "ترتيب الطلاب حسب النقاط المنشورة"
-  },
-  profile: {
-    title: "حساب الطالب",
-    subtitle: "بيانات حسابك الدراسي"
-  }
+let currentUser = null;
+let profile = null;
+let activeTimer = null;
+let submitting = false;
+
+const pageNames = {
+  dashboard: "الرئيسية",
+  schedule: "الجدول الدراسي",
+  announcements: "الإعلانات",
+  exams: "الامتحانات",
+  results: "النتائج",
+  leaderboard: "لوحة الشرف",
+  profile: "حساب الطالب"
 };
 
-const navigation = [
-  ["dashboard", "الرئيسية", "⌂", "dashboard.html"],
-  ["schedule", "الجدول الدراسي", "▦", "schedule.html"],
-  ["announcements", "الإعلانات", "◉", "announcements.html"],
-  ["exams", "الامتحانات", "✓", "exams.html"],
-  ["results", "النتائج", "▤", "results.html"],
-  ["leaderboard", "لوحة الشرف", "★", "leaderboard.html"],
-  ["profile", "حسابي", "♙", "profile.html"]
+const navItems = [
+  ["dashboard", "الرئيسية", "dashboard.html"],
+  ["schedule", "الجدول الدراسي", "schedule.html"],
+  ["announcements", "الإعلانات", "announcements.html"],
+  ["exams", "الامتحانات", "exams.html"],
+  ["results", "النتائج", "results.html"],
+  ["leaderboard", "لوحة الشرف", "leaderboard.html"],
+  ["profile", "حسابي", "profile.html"]
 ];
 
-let currentUser = null;
-let currentProfile = null;
-
-function escapeHTML(value) {
-  return String(value ?? "").replace(/[&<>"']/g, (char) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  })[char]);
+function esc(v) {
+  return String(v ?? "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;",
+    '"': "&quot;", "'": "&#39;"
+  })[c]);
 }
 
-function formatDate(value) {
-  if (!value) return "—";
-
-  const date = typeof value?.toDate === "function"
-    ? value.toDate()
-    : new Date(value);
-
-  if (Number.isNaN(date.getTime())) return "—";
-
-  return new Intl.DateTimeFormat("ar-EG", {
-    year: "numeric",
-    month: "short",
-    day: "numeric"
-  }).format(date);
+function dateText(v) {
+  if (!v) return "—";
+  const d = typeof v.toDate === "function" ? v.toDate() : new Date(v);
+  return Number.isNaN(d.getTime()) ? "—" :
+    new Intl.DateTimeFormat("ar-EG", {
+      dateStyle: "medium", timeStyle: "short"
+    }).format(d);
 }
 
-function displayValue(value) {
-  return value === undefined || value === null || value === ""
-    ? "غير محدد"
-    : escapeHTML(value);
+function displayName() {
+  return profile?.name || profile?.fullName ||
+    currentUser?.displayName || "الطالب";
 }
 
-function emptyState(title, description) {
-  return `
-    <div class="empty-state">
-      <strong>${escapeHTML(title)}</strong>
-      ${escapeHTML(description)}
-    </div>
-  `;
+function matchesStudent(item) {
+  const stageOK = !item.stage || item.stage === profile.stage;
+  const classOK = !item.classId ||
+    item.classId === profile.classId ||
+    item.classId === profile.className;
+  return stageOK && classOK;
 }
 
-function showError(message) {
-  if (!appRoot) return;
-
-  appRoot.innerHTML = `
-    <main class="main-area">
-      <div class="notice error">${escapeHTML(message)}</div>
-      <button class="btn" id="retryButton">إعادة المحاولة</button>
-    </main>
-  `;
-
-  document.getElementById("retryButton")?.addEventListener("click", () => {
-    window.location.reload();
-  });
+function empty(title, detail = "") {
+  return `<div class="empty-state"><strong>${esc(title)}</strong>${esc(detail)}</div>`;
 }
 
-function getStudentName() {
-  return currentProfile?.fullName ||
-    currentProfile?.name ||
-    currentUser?.displayName ||
-    "الطالب";
+function notify(text, error = false) {
+  const old = $("studentNotice");
+  if (old) old.remove();
+
+  const el = document.createElement("div");
+  el.id = "studentNotice";
+  el.className = error ? "notice error" : "notice success";
+  el.textContent = text;
+
+  const content = $("pageContent");
+  if (content) content.prepend(el);
 }
 
-function getStage() {
-  return currentProfile?.stage || "";
-}
-
-function getClassId() {
-  return currentProfile?.classId || "";
-}
-
-function buildShell() {
-  const info = pageInfo[page] || pageInfo.dashboard;
-
-  const navHTML = navigation.map(([key, label, icon, href]) => `
-    <a class="nav-link ${key === page ? "active" : ""}"
-       href="${href}" ${key === page ? 'aria-current="page"' : ""}>
-      <span class="nav-icon">${icon}</span>
-      <span>${label}</span>
-    </a>
-  `).join("");
-
-  appRoot.innerHTML = `
+function shell() {
+  root.innerHTML = `
     <div class="app-layout">
       <aside class="sidebar">
         <div class="brand">
@@ -155,536 +90,450 @@ function buildShell() {
             <div class="brand-subtitle">المدرسة المصرية الألمانية للتمريض</div>
           </div>
         </div>
-
         <div class="nav-label">القائمة الرئيسية</div>
-        <nav class="nav-menu" aria-label="القائمة الرئيسية">
-          ${navHTML}
+        <nav class="nav-menu">
+          ${navItems.map(([key, label, href]) => `
+            <a class="nav-link ${page === key ? "active" : ""}"
+               href="${href}">${label}</a>
+          `).join("")}
         </nav>
-
-        <div class="sidebar-footer">
-          بوابتك التعليمية داخل المدرسة
-        </div>
+        <div class="sidebar-footer">بوابتك التعليمية</div>
       </aside>
 
       <main class="main-area">
         <header class="topbar">
           <div>
-            <h1 class="page-heading">${info.title}</h1>
-            <p class="page-subtitle">${info.subtitle}</p>
+            <h1 class="page-heading">${pageNames[page] || "الرئيسية"}</h1>
+            <p class="page-subtitle">EGNS Smart Campus</p>
           </div>
-
           <div class="user-chip">
-            <div class="avatar" id="studentAvatar">ط</div>
+            <div class="avatar">${esc(displayName().charAt(0))}</div>
             <div>
-              <div class="user-name" id="studentName">الطالب</div>
+              <div class="user-name">${esc(displayName())}</div>
               <div class="user-role">حساب طالب</div>
             </div>
           </div>
         </header>
 
-        <div id="pageContent">
-          <div class="loading">جارٍ تحميل البيانات...</div>
-        </div>
-
-        <footer class="footer">
-          EGNS Smart Campus · نظام المدرسة المصرية الألمانية للتمريض
-        </footer>
+        <div id="pageContent"><div class="loading">جارٍ تحميل البيانات...</div></div>
+        <footer class="footer">EGNS Smart Campus</footer>
       </main>
     </div>
   `;
-
-  document.getElementById("studentName").textContent = getStudentName();
-  document.getElementById("studentAvatar").textContent =
-    getStudentName().trim().charAt(0) || "ط";
 }
 
-function setContent(html) {
-  const container = document.getElementById("pageContent");
-  if (container) container.innerHTML = html;
+async function readRows(name, max = 100) {
+  const snap = await getDocs(query(collection(db, name), limit(max)));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-function renderProfileFields(profile) {
-  const fields = [
-    ["الاسم", profile.fullName || profile.name],
-    ["الصف الدراسي", profile.stage],
-    ["الفصل", profile.className || profile.classId],
-    ["الكود المدرسي", profile.loginCode],
-    ["البريد الإلكتروني", currentUser.email],
-    ["حالة الحساب", profile.active === true ? "نشط" : "غير نشط"]
-  ];
-
-  return `
-    <div class="profile-list">
-      ${fields.map(([label, value]) => `
-        <div class="profile-field">
-          <span>${escapeHTML(label)}</span>
-          <strong>${displayValue(value)}</strong>
-        </div>
-      `).join("")}
-    </div>
-  `;
+async function readMyAttempts() {
+  const snap = await getDocs(query(
+    collection(db, "examAttempts"),
+    where("studentUid", "==", currentUser.uid),
+    limit(100)
+  ));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-function matchesStudentScope(data) {
-  const stageMatches =
-    !data.stage || data.stage === getStage();
-
-  const classMatches =
-    !data.classId || data.classId === getClassId();
-
-  return stageMatches && classMatches;
+function announcementCard(x) {
+  return `<article class="data-card">
+    <div class="card-meta">${dateText(x.createdAt)}</div>
+    <h3>${esc(x.title || "إعلان")}</h3>
+    <p>${esc(x.body || x.message || x.content || "")}</p>
+  </article>`;
 }
 
-async function readCollection(name, max = 100) {
-  const result = await getDocs(
-    query(collection(db, name), limit(max))
-  );
-
-  return result.docs.map((item) => ({
-    id: item.id,
-    ...item.data()
-  }));
-}
-
-async function loadDashboard() {
-  const [announcements, exams, timetable, attempts] = await Promise.all([
-    readCollection("announcements", 100),
-    readCollection("exams", 100),
-    readCollection("timetables", 100),
-    readOwnAttempts()
+async function dashboardPage() {
+  const [announcements, exams, attempts] = await Promise.all([
+    getDocs(query(collection(db, "announcements"), where("active", "==", true), limit(100))),
+    getDocs(query(collection(db, "exams"), where("active", "==", true), limit(100))),
+    readMyAttempts()
   ]);
 
-  const visibleAnnouncements = announcements
-    .filter(matchesStudentScope)
-    .filter((item) => item.active !== false);
+  const news = announcements.docs.map(d => ({ id: d.id, ...d.data() }))
+    .filter(matchesStudent);
+  const available = exams.docs.map(d => ({ id: d.id, ...d.data() }))
+    .filter(matchesStudent);
 
-  const visibleExams = exams
-    .filter(matchesStudentScope)
-    .filter((item) => item.active === true);
-
-  const visibleTimetable = timetable.filter(matchesStudentScope);
-
-  setContent(`
+  $("pageContent").innerHTML = `
     <section class="welcome-banner">
-      <h2>أهلًا بك، ${escapeHTML(getStudentName())} 👋</h2>
-      <p>
-        دي مساحتك الدراسية على EGNS Smart Campus.
-        تابع جدولك وإعلانات المدرسة وامتحاناتك من مكان واحد.
-      </p>
+      <h2>أهلًا بك، ${esc(displayName())} 👋</h2>
+      <p>تابع جدولك الدراسي وإعلانات المدرسة والامتحانات المنشورة لفصلك.</p>
     </section>
 
     <section class="stats-grid">
       <article class="stat-card">
-        <span class="stat-label">الصف الدراسي</span>
-        <strong class="stat-value" style="font-size:18px">
-          ${displayValue(getStage())}
-        </strong>
-        <div class="stat-note">الصف المرتبط بحسابك</div>
+        <span class="stat-label">المرحلة</span>
+        <strong class="stat-value" style="font-size:16px">${esc(profile.stage || "غير محددة")}</strong>
       </article>
-
+      <article class="stat-card">
+        <span class="stat-label">الفصل</span>
+        <strong class="stat-value" style="font-size:16px">${esc(profile.className || profile.classId || "غير محدد")}</strong>
+      </article>
       <article class="stat-card">
         <span class="stat-label">الامتحانات المتاحة</span>
-        <strong class="stat-value">${visibleExams.length}</strong>
-        <div class="stat-note">حسب البيانات المنشورة</div>
+        <strong class="stat-value">${available.length}</strong>
       </article>
-
       <article class="stat-card">
-        <span class="stat-label">محاولاتك المسجلة</span>
+        <span class="stat-label">المحاولات المسجلة</span>
         <strong class="stat-value">${attempts.length}</strong>
-        <div class="stat-note">المحاولات المرتبطة بحسابك</div>
       </article>
     </section>
 
     <section class="panel">
-      <div class="panel-heading">
-        <div>
-          <h2>آخر الإعلانات</h2>
-          <p>التنبيهات المنشورة للطلاب</p>
-        </div>
-        <a class="btn btn-light" href="announcements.html">كل الإعلانات</a>
-      </div>
-
-      ${visibleAnnouncements.length
-        ? `<div class="cards-grid">
-            ${visibleAnnouncements.slice(0, 4).map((item) => `
-              <article class="data-card">
-                <h3>${displayValue(item.title)}</h3>
-                <p>${displayValue(item.body || item.message || item.content)}</p>
-                <p class="card-meta">${formatDate(item.createdAt)}</p>
-              </article>
-            `).join("")}
-          </div>`
-        : emptyState("لا توجد إعلانات حاليًا", "ستظهر هنا الإعلانات المنشورة التي تخصك.")}
+      <div class="panel-heading"><h2>آخر الإعلانات</h2>
+      <a class="btn btn-light" href="announcements.html">كل الإعلانات</a></div>
+      <div class="cards-grid">${news.slice(0, 4).map(announcementCard).join("") ||
+        empty("لا توجد إعلانات", "ستظهر الإعلانات المنشورة هنا.")}</div>
     </section>
 
     <section class="panel">
-      <div class="panel-heading">
-        <div>
-          <h2>روابط سريعة</h2>
-          <p>انتقل إلى الخدمات الدراسية</p>
-        </div>
-      </div>
-
+      <div class="panel-heading"><h2>روابط سريعة</h2></div>
       <div class="cards-grid">
-        <article class="data-card">
-          <h3>الجدول الدراسي</h3>
-          <p>راجع المواعيد والمواد المنشورة لفصلك.</p>
-          <a class="btn" href="schedule.html">عرض الجدول</a>
-        </article>
-
-        <article class="data-card">
-          <h3>الامتحانات</h3>
-          <p>تابع الامتحانات المنشورة لصفك.</p>
-          <a class="btn" href="exams.html">عرض الامتحانات</a>
-        </article>
+        <article class="data-card"><h3>الجدول الدراسي</h3>
+          <a class="btn" href="schedule.html">عرض الجدول</a></article>
+        <article class="data-card"><h3>الامتحانات</h3>
+          <a class="btn" href="exams.html">عرض الامتحانات</a></article>
       </div>
     </section>
-  `);
+  `;
 }
 
-async function readOwnAttempts() {
-  const result = await getDocs(
-    query(
-      collection(db, "examAttempts"),
-      where("studentUid", "==", currentUser.uid),
-      limit(100)
-    )
-  );
+async function schedulePage() {
+  const rows = (await readRows("timetables"))
+    .filter(matchesStudent)
+    .filter(x => x.active !== false);
 
-  return result.docs.map((item) => ({
-    id: item.id,
-    ...item.data()
-  }));
+  $("pageContent").innerHTML = `
+    <section class="panel">
+      <h2>الجدول الدراسي</h2>
+      ${rows.length ? `<div class="table-wrap"><table>
+        <thead><tr><th>اليوم</th><th>المادة</th><th>الوقت</th><th>المكان</th><th>المعلم</th></tr></thead>
+        <tbody>${rows.map(x => `<tr>
+          <td>${esc(x.dayName || x.day || "—")}</td>
+          <td>${esc(x.subjectName || x.subject || "—")}</td>
+          <td>${esc(x.time || [x.startTime, x.endTime].filter(Boolean).join(" - ") || "—")}</td>
+          <td>${esc(x.room || x.className || "—")}</td>
+          <td>${esc(x.teacherName || "—")}</td>
+        </tr>`).join("")}</tbody>
+      </table></div>` : empty("لم يُنشر جدول دراسي بعد.") }
+    </section>`;
 }
 
-async function loadSchedule() {
-  const rows = (await readCollection("timetables", 100))
-    .filter(matchesStudentScope)
-    .filter((item) => item.active !== false);
+async function announcementsPage() {
+  const rows = (await getDocs(query(
+    collection(db, "announcements"),
+    where("active", "==", true),
+    limit(100)
+  ))).docs.map(d => ({ id: d.id, ...d.data() })).filter(matchesStudent);
 
-  if (!rows.length) {
-    setContent(`
-      <section class="panel">
-        ${emptyState("لم يتم نشر جدول بعد", "سيظهر الجدول هنا بعد إضافته إلى قاعدة بيانات المدرسة.")}
-      </section>
-    `);
-    return;
+  $("pageContent").innerHTML = `
+    <section class="panel"><h2>إعلانات المدرسة</h2>
+      <div class="cards-grid">${rows.map(announcementCard).join("") ||
+        empty("لا توجد إعلانات حاليًا.")}</div>
+    </section>`;
+}
+
+function stopTimer() {
+  if (activeTimer) clearInterval(activeTimer);
+  activeTimer = null;
+}
+
+async function examsPage() {
+  stopTimer();
+
+  const rows = (await getDocs(query(
+    collection(db, "exams"),
+    where("active", "==", true),
+    limit(100)
+  ))).docs.map(d => ({ id: d.id, ...d.data() })).filter(matchesStudent);
+
+  $("pageContent").innerHTML = `
+    <section class="panel">
+      <h2>الامتحانات المتاحة</h2>
+      <div class="cards-grid">
+        ${rows.map(x => `<article class="data-card">
+          <h3>${esc(x.title)}</h3>
+          <p>المادة: ${esc(x.subjectName || "—")}</p>
+          <p>المدة: ${Number(x.durationMinutes || 0)} دقيقة</p>
+          <p>الدرجة النهائية: ${Number(x.totalMarks || 0)}</p>
+          <button class="btn" data-start-exam="${esc(x.id)}" type="button">بدء الامتحان</button>
+        </article>`).join("") || empty("لا توجد امتحانات متاحة حاليًا.")}
+      </div>
+    </section>`;
+
+  document.querySelectorAll("[data-start-exam]").forEach(button => {
+    button.addEventListener("click", () => startExam(button.dataset.startExam));
+  });
+}
+
+async function startExam(examId) {
+  if (!confirm("بعد بدء الامتحان سيبدأ المؤقت. هل تريد المتابعة؟")) return;
+
+  stopTimer();
+
+  try {
+    const [examSnap, keySnap] = await Promise.all([
+      getDoc(doc(db, "exams", examId)),
+      getDoc(doc(db, "examKeys", examId))
+    ]);
+
+    if (!examSnap.exists() || !keySnap.exists()) {
+      throw new Error("بيانات الامتحان أو مفتاح الإجابة غير متاحة.");
+    }
+
+    const exam = examSnap.data();
+    const key = keySnap.data();
+
+    if (!exam.active || !matchesStudent(exam)) {
+      throw new Error("هذا الامتحان غير متاح لحسابك.");
+    }
+
+    if (!Array.isArray(exam.questions) || !Array.isArray(key.answers)) {
+      throw new Error("تركيب بيانات الامتحان غير صحيح.");
+    }
+
+    renderExam(examId, exam, key.answers);
+
+  } catch (error) {
+    console.error(error);
+    notify(error.message || "تعذر فتح الامتحان.", true);
+  }
+}
+
+function renderExam(examId, exam, answerKey) {
+  const duration = Math.max(1, Number(exam.durationMinutes || 30));
+  let secondsLeft = duration * 60;
+  submitting = false;
+
+  $("pageContent").innerHTML = `
+    <section class="panel">
+      <div class="panel-heading">
+        <div><h2>${esc(exam.title)}</h2><p>${esc(exam.subjectName || "")}</p></div>
+        <div class="badge badge-success" id="examTimer">${duration}:00</div>
+      </div>
+
+      <form id="examAnswerForm">
+        ${exam.questions.map((q, i) => `
+          <article class="data-card" style="margin-bottom:14px">
+            <h3>السؤال ${i + 1}: ${esc(q.text)}</h3>
+            ${(q.options || []).map((option, j) => `
+              <label style="display:flex;gap:8px;align-items:center;padding:8px 0">
+                <input type="radio" name="q_${esc(q.id || `q${i + 1}`)}" value="${j}">
+                <span>${esc(option)}</span>
+              </label>
+            `).join("")}
+          </article>
+        `).join("")}
+
+        <button id="submitExam" class="btn" type="submit">تسليم الامتحان</button>
+      </form>
+    </section>`;
+
+  const timer = $("examTimer");
+
+  activeTimer = setInterval(() => {
+    secondsLeft--;
+    timer.textContent =
+      `${Math.floor(secondsLeft / 60)}:${String(secondsLeft % 60).padStart(2, "0")}`;
+
+    if (secondsLeft <= 0) {
+      stopTimer();
+      submitExam(examId, exam, answerKey, true);
+    }
+  }, 1000);
+
+  $("examAnswerForm").addEventListener("submit", event => {
+    event.preventDefault();
+    submitExam(examId, exam, answerKey, false);
+  });
+}
+
+async function submitExam(examId, exam, answerKey, timeExpired) {
+  if (submitting) return;
+  submitting = true;
+  stopTimer();
+
+  const form = $("examAnswerForm");
+  if (!form) return;
+
+  const submitButton = $("submitExam");
+  if (submitButton) {
+    submitButton.disabled = true;
+    submitButton.textContent = "جارٍ تصحيح وحفظ النتيجة...";
   }
 
-  const days = {
-    sunday: "الأحد",
-    monday: "الإثنين",
-    tuesday: "الثلاثاء",
-    wednesday: "الأربعاء",
-    thursday: "الخميس",
-    friday: "الجمعة",
-    saturday: "السبت"
-  };
+  try {
+    const formData = new FormData(form);
+    const answers = [];
+    let score = 0;
+    let maxScore = 0;
 
-  rows.sort((a, b) =>
-    String(a.day || "").localeCompare(String(b.day || ""), "ar")
-  );
+    exam.questions.forEach((q, index) => {
+      const qid = q.id || `q${index + 1}`;
+      const selected = formData.get(`q_${qid}`);
+      const key = answerKey.find(a => a.questionId === qid);
+      const marks = Number(key?.marks ?? q.marks ?? 1);
+      maxScore += marks;
 
-  setContent(`
-    <section class="panel">
-      <div class="panel-heading">
-        <div>
-          <h2>الجدول الدراسي</h2>
-          <p>المواعيد المعتمدة والمنشورة من إدارة المدرسة</p>
-        </div>
-      </div>
+      const chosen = selected === null ? null : Number(selected);
+      const correct = chosen !== null &&
+        chosen === Number(key?.correctAnswer);
 
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>اليوم</th>
-              <th>المادة</th>
-              <th>الموعد</th>
-              <th>الفصل / المكان</th>
-              <th>المدرس</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rows.map((item) => `
-              <tr>
-                <td>${displayValue(days[String(item.day || "").toLowerCase()] || item.dayName || item.day)}</td>
-                <td>${displayValue(item.subjectName || item.subject)}</td>
-                <td>${displayValue(item.time || [item.startTime, item.endTime].filter(Boolean).join(" - "))}</td>
-                <td>${displayValue(item.room || item.className || item.classId)}</td>
-                <td>${displayValue(item.teacherName)}</td>
-              </tr>
-            `).join("")}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  `);
-}
+      if (correct) score += marks;
 
-async function loadAnnouncements() {
-  const rows = (await readCollection("announcements", 100))
-    .filter(matchesStudentScope)
-    .filter((item) => item.active !== false)
-    .sort((a, b) => {
-      const aDate = a.createdAt?.toMillis?.() || 0;
-      const bDate = b.createdAt?.toMillis?.() || 0;
-      return bDate - aDate;
+      answers.push({
+        questionId: qid,
+        selectedAnswer: chosen,
+        correct: Boolean(correct)
+      });
     });
 
-  setContent(`
-    <section class="panel">
-      <div class="panel-heading">
-        <div>
-          <h2>إعلانات المدرسة</h2>
-          <p>الإعلانات العامة والإعلانات الموجهة لصفك</p>
-        </div>
-      </div>
+    await addDoc(collection(db, "examAttempts"), {
+      examId,
+      examTitle: exam.title || "",
+      studentUid: currentUser.uid,
+      studentName: displayName(),
+      teacherUid: exam.teacherUid || "",
+      classId: profile.classId || "",
+      stage: profile.stage || "",
+      answers,
+      score,
+      maxScore: Number(exam.totalMarks || maxScore),
+      status: timeExpired ? "time_expired" : "submitted",
+      submittedAt: serverTimestamp()
+    });
 
-      ${rows.length
-        ? `<div class="cards-grid">
-            ${rows.map((item) => `
-              <article class="data-card">
-                <div class="card-meta">${formatDate(item.createdAt)}</div>
-                <h3>${displayValue(item.title)}</h3>
-                <p>${displayValue(item.body || item.message || item.content)}</p>
-              </article>
-            `).join("")}
-          </div>`
-        : emptyState("لا توجد إعلانات", "لم يتم نشر إعلانات متاحة لحسابك حتى الآن.")}
-    </section>
-  `);
+    $("pageContent").innerHTML = `
+      <section class="panel">
+        <h2>تم تسليم الامتحان</h2>
+        <div class="welcome-banner">
+          <h2>درجتك: ${score} من ${Number(exam.totalMarks || maxScore)}</h2>
+          <p>${timeExpired ? "انتهى الوقت وتم تسليم الإجابات." : "تم حفظ محاولتك بنجاح."}</p>
+        </div>
+        <a class="btn" href="results.html">عرض النتائج</a>
+        <a class="btn btn-light" href="exams.html">العودة للامتحانات</a>
+      </section>`;
+
+  } catch (error) {
+    console.error(error);
+    submitting = false;
+    notify("تعذر حفظ المحاولة. لا تغلق الصفحة؛ حاول التسليم مرة أخرى.", true);
+
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.textContent = "إعادة محاولة التسليم";
+    }
+  }
 }
 
-async function loadExams() {
-  const rows = (await readCollection("exams", 100))
-    .filter(matchesStudentScope)
-    .filter((item) => item.active === true);
+async function resultsPage() {
+  const rows = (await readMyAttempts()).sort((a, b) =>
+    (b.submittedAt?.toMillis?.() || 0) -
+    (a.submittedAt?.toMillis?.() || 0)
+  );
 
-  setContent(`
-    <section class="notice">
-      الامتحانات المعروضة هنا هي الامتحانات المنشورة والمرتبطة ببيانات صفك.
-      لن يظهر امتحان غير مفعّل.
-    </section>
-
-    <section class="panel">
-      <div class="panel-heading">
-        <div>
-          <h2>الامتحانات المتاحة</h2>
-          <p>تفاصيل الامتحان وموعده حسب إعدادات الإدارة</p>
-        </div>
-      </div>
-
-      ${rows.length
-        ? `<div class="cards-grid">
-            ${rows.map((item) => `
-              <article class="data-card">
-                <h3>${displayValue(item.title)}</h3>
-                <p>${displayValue(item.subjectName || item.subject || "المادة غير محددة")}</p>
-                <p>${displayValue(item.description || "لا يوجد وصف إضافي.")}</p>
-                <p>عدد الأسئلة: ${displayValue(item.questionCount)}</p>
-                <p>المدة: ${displayValue(item.durationMinutes)} دقيقة</p>
-                <span class="badge badge-success">منشور</span>
-              </article>
-            `).join("")}
-          </div>`
-        : emptyState("لا توجد امتحانات متاحة", "سيظهر الامتحان هنا عندما تنشره الإدارة وتفعّله.")}
-    </section>
-
-    <section class="panel">
-      <h2 class="page-heading" style="font-size:17px">ملاحظة حول حل الامتحانات</h2>
-      <p class="page-subtitle">
-        هذه النسخة تعرض الامتحانات المنشورة فقط. قبل تفعيل الحل والتصحيح،
-        يجب تحديد آلية آمنة لحفظ الإجابات ومنع تعديل الدرجات من المتصفح.
-      </p>
-    </section>
-  `);
+  $("pageContent").innerHTML = `
+    <section class="panel"><h2>نتائجي</h2>
+      ${rows.length ? `<div class="table-wrap"><table>
+        <thead><tr><th>الامتحان</th><th>الدرجة</th><th>الحالة</th><th>التاريخ</th></tr></thead>
+        <tbody>${rows.map(x => `<tr>
+          <td>${esc(x.examTitle || x.examId)}</td>
+          <td>${Number(x.score || 0)} / ${Number(x.maxScore || 0)}</td>
+          <td>${esc(x.status || "مسجلة")}</td>
+          <td>${dateText(x.submittedAt)}</td>
+        </tr>`).join("")}</tbody>
+      </table></div>` : empty("لا توجد نتائج مسجلة بعد.") }
+    </section>`;
 }
 
-async function loadResults() {
-  const rows = await readOwnAttempts();
-
-  setContent(`
-    <section class="panel">
-      <div class="panel-heading">
-        <div>
-          <h2>نتائجي</h2>
-          <p>المحاولات المسجلة تحت حسابك</p>
-        </div>
-      </div>
-
-      ${rows.length
-        ? `<div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>الامتحان</th>
-                  <th>الدرجة</th>
-                  <th>الدرجة النهائية</th>
-                  <th>تاريخ المحاولة</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${rows.map((item) => `
-                  <tr>
-                    <td>${displayValue(item.examTitle || item.examId)}</td>
-                    <td>${displayValue(item.score)}</td>
-                    <td>${displayValue(item.maxScore)}</td>
-                    <td>${formatDate(item.submittedAt)}</td>
-                  </tr>
-                `).join("")}
-              </tbody>
-            </table>
-          </div>`
-        : emptyState("لا توجد نتائج مسجلة", "ستظهر نتائجك بعد تفعيل نظام الامتحانات وتسجيل المحاولات.")}
-    </section>
-  `);
-}
-
-async function loadLeaderboard() {
-  // هذه المجموعة مخصصة لبيانات ترتيب منشورة، لا لإجابات الامتحانات.
-  const rows = (await readCollection("leaderboard", 100))
-    .filter(matchesStudentScope)
+async function leaderboardPage() {
+  const rows = (await readRows("leaderboard"))
+    .filter(matchesStudent)
     .sort((a, b) => Number(b.points || 0) - Number(a.points || 0));
 
-  setContent(`
-    <section class="panel">
-      <div class="panel-heading">
-        <div>
-          <h2>لوحة الشرف</h2>
-          <p>النقاط المنشورة لكل طالب</p>
-        </div>
-      </div>
-
-      ${rows.length
-        ? `<div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>الترتيب</th>
-                  <th>الطالب</th>
-                  <th>الصف</th>
-                  <th>النقاط</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${rows.map((item, index) => `
-                  <tr>
-                    <td>${index + 1}</td>
-                    <td>${displayValue(item.studentName)}</td>
-                    <td>${displayValue(item.stage)}</td>
-                    <td><strong class="points-highlight">${Number(item.points || 0)}</strong></td>
-                  </tr>
-                `).join("")}
-              </tbody>
-            </table>
-          </div>`
-        : emptyState("لوحة الشرف فارغة", "ستظهر هنا النقاط بعد إعداد نظام النقاط ونشر بيانات الترتيب.")}
-    </section>
-  `);
+  $("pageContent").innerHTML = `
+    <section class="panel"><h2>لوحة الشرف</h2>
+      ${rows.length ? `<div class="table-wrap"><table>
+        <thead><tr><th>الترتيب</th><th>الطالب</th><th>الفصل</th><th>النقاط</th></tr></thead>
+        <tbody>${rows.map((x, i) => `<tr>
+          <td>${i + 1}</td><td>${esc(x.studentName || "طالب")}</td>
+          <td>${esc(x.className || x.classId || "—")}</td>
+          <td>${Number(x.points || 0)}</td>
+        </tr>`).join("")}</tbody>
+      </table></div>` : empty("لوحة الشرف فارغة حاليًا.") }
+    </section>`;
 }
 
-async function loadProfile() {
-  setContent(`
-    <section class="panel">
-      <div class="panel-heading">
-        <div>
-          <h2>بياناتي الدراسية</h2>
-          <p>البيانات المسجلة في ملف حسابك</p>
-        </div>
-      </div>
+async function profilePage() {
+  const fields = [
+    ["الاسم", profile.name || profile.fullName],
+    ["المرحلة", profile.stage],
+    ["الفصل", profile.className || profile.classId],
+    ["كود الدخول", profile.loginCode],
+    ["البريد الإلكتروني", currentUser.email],
+    ["حالة الحساب", profile.active ? "نشط" : "غير نشط"]
+  ];
 
-      ${renderProfileFields(currentProfile)}
+  $("pageContent").innerHTML = `
+    <section class="panel"><h2>ملفي الشخصي</h2>
+      <div class="profile-list">${fields.map(([k, v]) => `
+        <div class="profile-field"><span>${esc(k)}</span><strong>${esc(v || "غير محدد")}</strong></div>
+      `).join("")}</div>
+      <button id="studentLogout" class="btn btn-red" style="margin-top:20px">تسجيل الخروج</button>
+    </section>`;
 
-      <div style="margin-top:20px">
-        <button class="btn btn-red" id="logoutButton">تسجيل الخروج</button>
-      </div>
-    </section>
-  `);
-
-  document.getElementById("logoutButton")?.addEventListener("click", async () => {
-    const button = document.getElementById("logoutButton");
-    button.disabled = true;
-    button.textContent = "جارٍ تسجيل الخروج...";
-
-    try {
-      await signOut(auth);
-      window.location.replace(
-        new URL("./login.html", window.location.href).href
-      );
-    } catch (error) {
-      console.error("Logout error:", error);
-      button.disabled = false;
-      button.textContent = "تسجيل الخروج";
-      showError("تعذر تسجيل الخروج. حاول مرة أخرى.");
-    }
+  $("studentLogout").addEventListener("click", async () => {
+    await signOut(auth);
+    location.replace("login.html");
   });
 }
 
 async function renderPage() {
   switch (page) {
-    case "dashboard":
-      return loadDashboard();
-    case "schedule":
-      return loadSchedule();
-    case "announcements":
-      return loadAnnouncements();
-    case "exams":
-      return loadExams();
-    case "results":
-      return loadResults();
-    case "leaderboard":
-      return loadLeaderboard();
-    case "profile":
-      return loadProfile();
-    default:
-      return loadDashboard();
+    case "dashboard": return dashboardPage();
+    case "schedule": return schedulePage();
+    case "announcements": return announcementsPage();
+    case "exams": return examsPage();
+    case "results": return resultsPage();
+    case "leaderboard": return leaderboardPage();
+    case "profile": return profilePage();
+    default: return dashboardPage();
   }
 }
 
-onAuthStateChanged(auth, async (user) => {
+onAuthStateChanged(auth, async user => {
   if (!user) {
-    window.location.replace(
-      new URL("./login.html", window.location.href).href
-    );
+    location.replace("login.html");
+    return;
+  }
+
+  if (isAdminEmail(user.email)) {
+    location.replace("admin.html");
     return;
   }
 
   currentUser = user;
 
   try {
-    const profileRef = doc(db, "users", user.uid);
-    const profileSnapshot = await getDoc(profileRef);
+    const snap = await getDoc(doc(db, "users", user.uid));
+    if (!snap.exists()) throw new Error("ملف الطالب غير موجود.");
 
-    if (!profileSnapshot.exists()) {
-      await signOut(auth);
-      window.location.replace(
-        new URL("./login.html", window.location.href).href
-      );
-      return;
+    profile = snap.data();
+
+    if (profile.role !== "student" || profile.active !== true) {
+      throw new Error("هذا الحساب ليس حساب طالب نشطًا.");
     }
 
-    currentProfile = profileSnapshot.data();
-
-    if (
-      currentProfile.active !== true ||
-      currentProfile.role !== "student"
-    ) {
-      await signOut(auth);
-      window.location.replace(
-        new URL("./login.html", window.location.href).href
-      );
-      return;
-    }
-
-    buildShell();
+    shell();
     await renderPage();
 
   } catch (error) {
-    console.error("Student section error:", error);
-
-    showError(
-      "تعذر تحميل بيانات الطالب. تأكد من إعدادات Firestore وصلاحيات القراءة."
-    );
+    console.error(error);
+    root.innerHTML = `<main class="main-area">
+      <div class="notice error">${esc(error.message || "تعذر تحميل حساب الطالب.")}</div>
+      <a class="btn" href="login.html">العودة لتسجيل الدخول</a>
+    </main>`;
   }
 });
