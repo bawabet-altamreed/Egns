@@ -1,19 +1,11 @@
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-
+import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import {
-  getAuth,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  setPersistence,
-  browserLocalPersistence
+  getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+  signOut, onAuthStateChanged, setPersistence, browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
-
 import {
-  getFirestore,
-  doc,
-  getDoc
+  getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc,
+  collection, getDocs, query, where, limit, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -26,19 +18,31 @@ const firebaseConfig = {
   measurementId: "G-9DRZGZJHEV"
 };
 
-const app = initializeApp(firebaseConfig);
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
 export {
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
   setPersistence,
   browserLocalPersistence,
   doc,
-  getDoc
+  getDoc,
+  setDoc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  collection,
+  getDocs,
+  query,
+  where,
+  limit,
+  orderBy,
+  serverTimestamp
 };
 
 export const ADMIN_EMAILS = [
@@ -47,50 +51,38 @@ export const ADMIN_EMAILS = [
 ];
 
 export function isAdminEmail(email) {
-  return ADMIN_EMAILS.includes(
-    String(email || "").trim().toLowerCase()
-  );
+  return ADMIN_EMAILS.includes(String(email || "").trim().toLowerCase());
 }
 
 export function normalizeLoginIdentifier(identifier) {
-  const value = String(identifier || "").trim();
+  const value = String(identifier || "").trim().toLowerCase();
 
   if (!value) {
     throw new Error("اكتب البريد الإلكتروني أو كود الحساب.");
   }
 
-  if (value.includes("@")) {
-    return value.toLowerCase();
-  }
+  if (value.includes("@")) return value;
 
-  if (!/^[a-zA-Z0-9._-]{3,64}$/.test(value)) {
+  if (!/^[a-z0-9._-]{3,64}$/.test(value)) {
     throw new Error("كود الحساب غير صالح.");
   }
 
-  return `${value.toLowerCase()}@accounts.egns.com`;
+  return `${value}@accounts.egns.com`;
 }
-
-const DASHBOARDS = {
-  owner: "admin.html",
-  director: "admin.html",
-  student_affairs: "staff.html",
-  exams_affairs: "staff.html",
-  teacher: "teacher.html",
-  student: "dashboard.html",
-  employee: "staff.html",
-  worker: "staff.html",
-  parent: "parent.html"
-};
 
 export function getDashboardPath(role) {
-  return DASHBOARDS[String(role || "").trim()] || null;
-}
+  const paths = {
+    owner: "admin.html",
+    director: "admin.html",
+    admin: "admin.html",
+    student: "dashboard.html",
+    teacher: "teacher.html",
+    employee: "staff.html",
+    worker: "staff.html",
+    student_affairs: "staff.html",
+    exams_affairs: "staff.html",
+    parent: "parent.html"
+  };
 
-export async function getUserProfile(uid) {
-  const profileRef = doc(db, "users", uid);
-  const profileSnapshot = await getDoc(profileRef);
-
-  return profileSnapshot.exists()
-    ? profileSnapshot.data()
-    : null;
+  return paths[String(role || "").trim()] || null;
 }
