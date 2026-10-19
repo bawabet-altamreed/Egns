@@ -1,119 +1,143 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>لوحة الإدارة | EGNS Smart Campus</title>
-  <link rel="stylesheet" href="assets/css/student.css">
-  <script type="module" src="assets/js/admin.js"></script>
+  <meta name="theme-color" content="#102b46">
+  <title>EGNS Smart Campus | لوحة الإدارة</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{font-family:Cairo,Arial,sans-serif;color:#172b40;background:#f3f6fa}
+    *{box-sizing:border-box}
+    body{margin:0}
+    button,input,select,textarea{font:inherit}
+    button{cursor:pointer}
+    .top{background:#102b46;color:white;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+    .top h1{font-size:21px;margin:0}.top p{margin:3px 0 0;color:#c7d7e6;font-size:13px}
+    .layout{display:grid;grid-template-columns:225px minmax(0,1fr);min-height:calc(100vh - 83px)}
+    aside{background:#173954;padding:15px;display:flex;flex-direction:column;gap:6px}
+    .nav{border:0;text-align:right;color:#e5eef6;background:transparent;padding:11px 13px;border-radius:9px}
+    .nav:hover,.nav.active{background:#2a5373;color:white}
+    main{padding:24px;min-width:0}
+    .heading{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+    h2{margin:0 0 5px;font-size:23px}.muted{color:#6c7e90;font-size:13px}
+    .btn{border:0;border-radius:9px;padding:10px 15px;background:#155e91;color:white;font-weight:700}
+    .btn.secondary{background:#e7eef5;color:#183b57}.btn.danger{background:#a93232}.btn:disabled{opacity:.5;cursor:not-allowed}
+    .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:20px}
+    .stat,.panel{background:white;border:1px solid #e3eaf1;border-radius:14px;padding:17px;box-shadow:0 3px 12px #102b4608}
+    .stat span{display:block;color:#667b8e;font-size:13px}.stat strong{display:block;font-size:28px;margin-top:5px}
+    .panel{margin-bottom:18px;min-width:0}
+    .toolbar{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px}
+    input,select,textarea{width:100%;padding:10px 11px;border:1px solid #d6e0e9;border-radius:8px;background:white;color:#172b40}
+    .toolbar input{max-width:350px}
+    .table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:650px}
+    th,td{text-align:right;padding:11px 10px;border-bottom:1px solid #edf1f5;font-size:13px;vertical-align:middle}
+    th{background:#f7f9fc;color:#52697d;font-weight:800}
+    .actions{display:flex;gap:6px;flex-wrap:wrap}
+    .actions button{font-size:12px;padding:6px 9px}
+    .pill{display:inline-block;padding:3px 8px;border-radius:20px;background:#e5f4eb;color:#236943;font-size:12px}
+    .pill.off{background:#fbe9e9;color:#9c3030}
+    .empty{text-align:center;color:#73869a;padding:28px}
+    .status{padding:12px 14px;border-radius:10px;margin-bottom:16px;white-space:pre-wrap;overflow-wrap:anywhere}
+    .status.info{background:#e8f2fc;color:#1d4e77}.status.ok{background:#e7f6eb;color:#1d693c}.status.err{background:#ffeded;color:#8d2525}
+    .hidden{display:none!important}
+    .modal{position:fixed;inset:0;background:#061827a6;display:flex;align-items:center;justify-content:center;padding:15px;z-index:10}
+    .dialog{background:white;border-radius:15px;width:min(720px,100%);max-height:92vh;overflow:auto;padding:22px}
+    .dialog-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}
+    .dialog-head h2{font-size:20px}.x{border:0;background:#edf2f6;border-radius:8px;padding:5px 12px}
+    .fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+    .field label{display:block;font-size:13px;font-weight:700;margin-bottom:5px}
+    .field.full{grid-column:1/-1}.field textarea{min-height:90px;resize:vertical}
+    .hint{font-size:12px;color:#73869a;margin-top:5px}
+    .dialog-actions{display:flex;gap:9px;margin-top:18px;flex-wrap:wrap}
+    #loading{padding:20px;text-align:center;color:#6c7e90}
+    @media(max-width:900px){.layout{grid-template-columns:1fr}aside{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}main{padding:15px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:520px){.fields{grid-template-columns:1fr}.field.full{grid-column:auto}.top{padding:15px}.stats{gap:8px}.stat{padding:12px}.stat strong{font-size:23px}}
+  </style>
 </head>
 <body>
-  <main class="main-area">
-    <header class="topbar">
-      <div>
-        <h1 class="page-heading">EGNS Smart Campus</h1>
-        <p class="page-subtitle">لوحة إدارة المدرسة</p>
+  <header class="top">
+    <div>
+      <h1>EGNS Smart Campus</h1>
+      <p>لوحة الإدارة والتحكم المدرسي</p>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <span id="adminEmail" style="font-size:12px"></span>
+      <button id="refreshBtn" class="btn secondary">تحديث البيانات ↻</button>
+      <button id="logoutBtn" class="btn danger">تسجيل الخروج</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside id="navigation">
+      <button class="nav active" data-page="overview">🏠 الرئيسية</button>
+      <button class="nav" data-page="users">👥 الحسابات</button>
+      <button class="nav" data-page="classes">🏫 الفصول</button>
+      <button class="nav" data-page="subjects">📚 المواد</button>
+      <button class="nav" data-page="timetables">🗓️ الجداول</button>
+      <button class="nav" data-page="announcements">📢 الإعلانات</button>
+      <button class="nav" data-page="exams">📝 الاختبارات</button>
+      <button class="nav" data-page="results">📊 المحاولات والنتائج</button>
+      <button class="nav" data-page="badges">🏅 الشارات</button>
+      <button class="nav" data-page="leaderboard">🏆 النقاط والترتيب</button>
+      <button class="nav" data-page="roles">🔐 تعريف الأدوار</button>
+    </aside>
+
+    <main>
+      <div id="status" class="status info">جارٍ التحقق من تسجيل الدخول والاتصال بقاعدة البيانات…</div>
+      <section id="overviewPage">
+        <div class="heading">
+          <div><h2>نظرة عامة</h2><div class="muted">ملخص البيانات التي تستطيع اللوحة قراءتها من Firestore</div></div>
+          <button class="btn" id="overviewReload">تحديث الملخص</button>
+        </div>
+        <div class="stats">
+          <div class="stat"><span>الحسابات</span><strong id="statUsers">—</strong></div>
+          <div class="stat"><span>الفصول</span><strong id="statClasses">—</strong></div>
+          <div class="stat"><span>المواد</span><strong id="statSubjects">—</strong></div>
+          <div class="stat"><span>الاختبارات</span><strong id="statExams">—</strong></div>
+        </div>
+        <div class="panel">
+          <h3>حالة الاتصال</h3>
+          <p id="connectionInfo" class="muted">يتم فحص الاتصال…</p>
+          <p class="muted">الأرقام المعروضة تعتمد على المستندات التي تسمح قواعد Firestore بقراءتها، وبحد أقصى 300 مستند لكل قسم في هذه اللوحة.</p>
+        </div>
+      </section>
+
+      <section id="dataPage" class="hidden">
+        <div class="heading">
+          <div><h2 id="pageTitle">البيانات</h2><div id="pageDescription" class="muted"></div></div>
+          <button id="addBtn" class="btn">＋ إضافة جديد</button>
+        </div>
+        <div class="panel">
+          <div class="toolbar">
+            <input id="searchInput" placeholder="ابحث في البيانات المعروضة…">
+            <button id="reloadBtn" class="btn secondary">إعادة تحميل</button>
+          </div>
+          <div id="loading" class="hidden">جارٍ تحميل البيانات…</div>
+          <div id="tableContainer" class="table-wrap"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="modal" class="modal hidden">
+    <div class="dialog">
+      <div class="dialog-head">
+        <h2 id="formTitle">إضافة سجل</h2>
+        <button id="closeModal" class="x" type="button">إغلاق ✕</button>
       </div>
-      <button id="adminLogout" class="btn btn-red">تسجيل الخروج</button>
-    </header>
-
-    <section class="welcome-banner">
-      <h2>مركز إدارة المدرسة</h2>
-      <p>إدارة الحسابات والفصول والمواد والإعلانات والجداول والامتحانات من مكان واحد.</p>
-    </section>
-
-    <section class="panel">
-      <div class="panel-heading"><div>
-        <h2>إنشاء حساب جديد</h2>
-        <p>طالب أو معلم أو موظف أو إداري</p>
-      </div></div>
-
-      <form id="accountForm" class="profile-list">
-        <label class="profile-field">الاسم الكامل
-          <input name="name" required maxlength="100" placeholder="الاسم بالكامل">
-        </label>
-        <label class="profile-field">كود الدخول
-          <input name="loginCode" required minlength="3" maxlength="64"
-            pattern="[A-Za-z0-9._-]+" placeholder="مثال: std1001">
-        </label>
-        <label class="profile-field">كلمة المرور المؤقتة
-          <input name="password" type="password" required minlength="6"
-            autocomplete="new-password">
-        </label>
-        <label class="profile-field">نوع الحساب
-          <select name="role" required>
-            <option value="student">طالب</option>
-            <option value="teacher">معلم</option>
-            <option value="employee">موظف</option>
-            <option value="student_affairs">شؤون طلاب</option>
-            <option value="exams_affairs">شؤون امتحانات</option>
-          </select>
-        </label>
-        <label class="profile-field">المرحلة الدراسية
-          <select name="stage">
-            <option value="">غير محددة</option>
-            <option>الأول الثانوي التمريض</option>
-            <option>الثاني الثانوي التمريض</option>
-            <option>الثالث الثانوي التمريض</option>
-            <option>الأول معهد</option>
-            <option>الثاني معهد</option>
-          </select>
-        </label>
-        <label class="profile-field">الفصل / كود الفصل
-          <input name="classId" placeholder="مثال: class-1a">
-        </label>
-        <label class="profile-field">اسم الفصل
-          <input name="className" placeholder="مثال: 2/أ">
-        </label>
-        <div class="profile-field">
-          <button class="btn" type="submit">إنشاء الحساب</button>
+      <form id="recordForm">
+        <div id="formFields" class="fields"></div>
+        <div id="formError" class="status err hidden"></div>
+        <div class="dialog-actions">
+          <button id="saveBtn" class="btn" type="submit">حفظ البيانات</button>
+          <button id="cancelBtn" class="btn secondary" type="button">إلغاء</button>
         </div>
       </form>
-      <div id="accountMessage" aria-live="polite"></div>
-    </section>
+    </div>
+  </div>
 
-    <section class="panel">
-      <div class="panel-heading"><div>
-        <h2>إدارة بيانات النظام</h2>
-        <p>اختر مجموعة، ثم أضف مستندًا أو عدّل مستندًا موجودًا بصيغة JSON.</p>
-      </div></div>
-
-      <div class="profile-list">
-        <label class="profile-field">مجموعة البيانات
-          <select id="collectionSelect">
-            <option value="users">الحسابات users</option>
-            <option value="classes">الفصول classes</option>
-            <option value="subjects">المواد subjects</option>
-            <option value="announcements">الإعلانات announcements</option>
-            <option value="timetables">الجداول timetables</option>
-            <option value="exams">الامتحانات exams</option>
-            <option value="examKeys">مفاتيح الإجابات examKeys</option>
-            <option value="examAttempts">محاولات الامتحان examAttempts</option>
-            <option value="badges">الشارات badges</option>
-            <option value="leaderboard">لوحة الشرف leaderboard</option>
-          </select>
-        </label>
-        <label class="profile-field">معرّف المستند
-          <input id="documentId" placeholder="اتركه فارغًا لإنشاء معرّف تلقائي">
-        </label>
-      </div>
-
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:15px 0">
-        <button id="loadRecords" class="btn" type="button">تحميل السجلات</button>
-        <button id="newRecord" class="btn btn-light" type="button">مستند جديد</button>
-        <button id="saveRecord" class="btn" type="button">حفظ المستند</button>
-        <button id="deleteRecord" class="btn btn-red" type="button">حذف المستند</button>
-      </div>
-
-      <label class="profile-field">محتوى المستند (JSON)
-        <textarea id="recordJson" rows="12" spellcheck="false"
-          style="width:100%;direction:ltr;text-align:left;font-family:monospace"
-          placeholder='{"title":"مثال","active":true}'></textarea>
-      </label>
-
-      <div id="recordMessage" aria-live="polite"></div>
-      <div id="recordsList" class="cards-grid" style="margin-top:16px"></div>
-    </section>
-  </main>
+  <script type="module" src="./assets/js/admin.js"></script>
 </body>
 </html>
